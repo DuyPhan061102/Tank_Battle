@@ -170,8 +170,13 @@ void Game::update(float dt)
     {
         if (enemy.isHit(playerBounds))
         {
-            isRunning = false;
-            break;
+            player.takeDamage(20); // Tuỳ mức sát thương, ví dụ 20
+
+            if (player.getHP() <= 0)
+            {
+                isRunning = false;
+            }
+            break; // Chỉ trừ máu 1 lần mỗi enemy chạm
         }
     }
 }

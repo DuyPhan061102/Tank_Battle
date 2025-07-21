@@ -1,6 +1,8 @@
 // PlayerTank.h
 #pragma once
 #include "Tank.h"
+#include <SFML/Graphics.hpp>
+
 
 class PlayerTank : public Tank
 {
@@ -14,6 +16,12 @@ public:
 
     void shoot();
 
+    void takeDamage(int dmg);
+    int getHP() const;
+    void drawHP(sf::RenderWindow& window) const;
+
 private:
     sf::Vector2f movement;
+    int hp;
+    int maxHP;
 };
