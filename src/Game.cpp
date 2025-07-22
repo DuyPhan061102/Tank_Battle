@@ -28,6 +28,12 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
     scoreText.setFillColor(sf::Color::White);
     scoreText.setPosition(10.f, 10.f);
     scoreText.setString("Score: 0");
+    waveText.setFont(font);
+    waveText.setCharacterSize(24);
+    waveText.setFillColor(sf::Color::Cyan);
+    waveText.setPosition(10.f, 40.f);
+    waveText.setString("Wave: 1");
+
 
     gameOverText.setFont(font);
     gameOverText.setString("GAME OVER");
@@ -228,7 +234,21 @@ void Game::update(float dt)
             { return e.shouldBeRemoved(); }),
         enemies.end());
 
+    // va ham voii nguoi choi
+    if (enemies.empty() && enemySpawnedCount >= enemyPerWave)
+ {
+    waveNumber++;
+    enemyPerWave += 2;
+    enemySpawnedCount = 0;
+    waveText.setString("Wave: " + std::to_string(waveNumber));
+
+    player.setPosition(sf::Vector2f(100.f, 100.f)); // Reset vị trí player
+ }
+
+
+
     // va ham voi nguoi choi
+
     sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
     for (auto& enemy : enemies)
     {
@@ -271,7 +291,9 @@ void Game::render()
             enemy.draw(window);
 
     window.draw(scoreText);
+    window.draw(waveText);
     window.draw(highScoreText);
+
 
         if (!isRunning)
         {
@@ -291,10 +313,20 @@ void Game::render()
 
 void Game::spawnEnemy()
 {
+    if (enemySpawnedCount >= enemyPerWave)
+        return;
+
     float x = static_cast<float>(rand() % 700 + 50);
     float y = static_cast<float>(rand() % 500 + 50);
-    enemies.emplace_back(x, y);
+
+    Enemy e(x, y);
+    e.setSpeed(50.f * std::pow(1.35f, waveNumber)); // tăng 35% mỗi wave
+
+
+    enemies.push_back(e);
+    enemySpawnedCount++;
 }
+
 void Game::loadHighScore()
 {
     std::ifstream file("highscore.txt");
@@ -318,3 +350,4 @@ void Game::saveHighScore()
         file.close();
     }
 }
+

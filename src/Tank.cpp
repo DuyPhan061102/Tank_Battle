@@ -17,3 +17,8 @@ void Tank::draw(sf::RenderWindow &window) const {
 sf::Vector2f Tank::getPosition() const {
     return body.getPosition();
 }
+
+void Tank::setPosition(const sf::Vector2f &pos)
+{
+    body.setPosition(pos);
+}

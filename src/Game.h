@@ -6,8 +6,8 @@
 #include "Enemy.h"
 #include "Bullet.h"
 #include <vector>
+#include <cmath>
 #include <fstream> // để đọc/ghi file
-
 
 // Trạng thái của game
 enum class GameState
@@ -20,6 +20,9 @@ enum class GameState
 class Game
 {
 private:
+    int waveNumber = 1;
+    int enemyPerWave = 3;
+    int enemySpawnedCount = 0;
     sf::RenderWindow window;
     sf::Clock clock;
     sf::Clock enemySpawnClock;
@@ -39,6 +42,7 @@ private:
     sf::Font font;
     sf::Text scoreText;
     sf::Text gameOverText;
+    sf::Text waveText;
 
     // Các nút menu và game over
     sf::Text playButton;
@@ -61,6 +65,7 @@ private:
 
     void loadHighScore(); // đọc từ file
     void saveHighScore(); // ghi vào file
+
 
 public:
     Game();
