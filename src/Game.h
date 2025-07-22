@@ -1,4 +1,3 @@
-// Game.h
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
@@ -10,6 +9,14 @@
 #include <fstream> // để đọc/ghi file
 
 
+// Trạng thái của game
+enum class GameState
+{
+    Menu,
+    Playing,
+    GameOver
+};
+
 class Game
 {
 private:
@@ -17,7 +24,9 @@ private:
     sf::Clock clock;
     sf::Clock enemySpawnClock;
 
+    GameState gameState;     // trạng thái hiện tại của game
     bool isRunning;
+
     std::vector<Enemy> enemies;
     std::vector<Bullet> bullets;
     PlayerTank player;
@@ -26,10 +35,16 @@ private:
     sf::Texture backgroundTexture; // ảnh nền
     sf::Sprite backgroundSprite;   // sprite để vẽ ảnh
 
-    // Văn bản
+    // Font và văn bản
     sf::Font font;
     sf::Text scoreText;
     sf::Text gameOverText;
+
+    // Các nút menu và game over
+    sf::Text playButton;
+    sf::Text quitButton;
+    sf::Text retryButton;
+    sf::Text exitButton;
 
     // Điểm số
     int score = 0;
@@ -46,6 +61,7 @@ private:
 
     void loadHighScore(); // đọc từ file
     void saveHighScore(); // ghi vào file
+
 public:
     Game();
     void run();
