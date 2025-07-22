@@ -7,6 +7,7 @@
 #include "Enemy.h"
 #include "Bullet.h"
 #include <vector>
+#include <cmath>
 
 class Game
 {
