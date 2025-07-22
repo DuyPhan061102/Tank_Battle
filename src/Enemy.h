@@ -12,10 +12,12 @@ public:
     void move(float dx, float dy) override;
     void update(float deltaTime) override;
     void draw(sf::RenderWindow &window) const override;
-
+    
     bool isHit(const sf::FloatRect &bounds);
     void markToRemove();
     bool shouldBeRemoved() const;
+
+    void setSpeed(float newSpeed); 
 
 private:
     sf::Vector2f direction;

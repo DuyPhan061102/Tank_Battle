@@ -86,3 +86,8 @@ void Enemy::move(float dx, float dy)
 {
     body.move(dx, dy);
 }
+void Enemy::setSpeed(float newSpeed)
+{
+    speed = newSpeed;
+}
+

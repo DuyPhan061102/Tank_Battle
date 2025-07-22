@@ -11,6 +11,9 @@
 class Game
 {
 private:
+    int waveNumber = 1;
+    int enemyPerWave = 3;
+    int enemySpawnedCount = 0;
     sf::RenderWindow window;
     sf::Clock clock;
     sf::Clock enemySpawnClock;
@@ -28,6 +31,7 @@ private:
     sf::Font font;
     sf::Text scoreText;
     sf::Text gameOverText;
+    sf::Text waveText;
 
     // Điểm số
     int score = 0;
@@ -37,6 +41,7 @@ private:
     sf::SoundBuffer explosionBuffer;
     sf::Sound shootSound;
     sf::Sound explosionSound;
+
 
 
 public:
