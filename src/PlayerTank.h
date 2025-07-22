@@ -2,6 +2,7 @@
 #pragma once
 #include "Tank.h"
 #include <SFML/Graphics.hpp>
+#include <cmath>
 
 
 class PlayerTank : public Tank
