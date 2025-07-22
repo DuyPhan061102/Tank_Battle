@@ -28,12 +28,12 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
     scoreText.setFillColor(sf::Color::White);
     scoreText.setPosition(10.f, 10.f);
     scoreText.setString("Score: 0");
+
     waveText.setFont(font);
     waveText.setCharacterSize(24);
     waveText.setFillColor(sf::Color::Cyan);
     waveText.setPosition(10.f, 40.f);
     waveText.setString("Wave: 1");
-
 
     gameOverText.setFont(font);
     gameOverText.setString("GAME OVER");
@@ -71,7 +71,7 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
     highScoreText.setFont(font);
     highScoreText.setCharacterSize(24);
     highScoreText.setFillColor(sf::Color::Yellow);
-    highScoreText.setPosition(10.f, 40.f); // dưới điểm hiện tại
+    highScoreText.setPosition(10.f, 70.f); // dưới điểm hiện tại
     highScoreText.setString("High Score: " + std::to_string(highScore));
     // Tải âm thanh bắn
 
@@ -195,23 +195,23 @@ void Game::update(float dt)
         enemySpawnClock.restart();
     }
 
-    for (auto& enemy : enemies)
+    for (auto &enemy : enemies)
         enemy.update(dt);
 
-    for (auto& bullet : bullets)
+    for (auto &bullet : bullets)
         bullet.update(dt);
 
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
-        [this](const Bullet& b)
-        {
-            return b.isOffScreen(window);
-        }),
-        bullets.end());
+                                 [this](const Bullet &b)
+                                 {
+                                     return b.isOffScreen(window);
+                                 }),
+                  bullets.end());
 
     for (auto b = bullets.begin(); b != bullets.end();)
     {
         bool bulletErased = false;
-        for (auto& enemy : enemies)
+        for (auto &enemy : enemies)
         {
             if (enemy.isHit(b->getBounds()))
             {
@@ -230,27 +230,25 @@ void Game::update(float dt)
 
     enemies.erase(
         std::remove_if(enemies.begin(), enemies.end(),
-            [](const Enemy& e)
-            { return e.shouldBeRemoved(); }),
+                       [](const Enemy &e)
+                       { return e.shouldBeRemoved(); }),
         enemies.end());
 
     // va ham voii nguoi choi
     if (enemies.empty() && enemySpawnedCount >= enemyPerWave)
- {
-    waveNumber++;
-    enemyPerWave += 2;
-    enemySpawnedCount = 0;
-    waveText.setString("Wave: " + std::to_string(waveNumber));
+    {
+        waveNumber++;
+        enemyPerWave += 2;
+        enemySpawnedCount = 0;
+        waveText.setString("Wave: " + std::to_string(waveNumber));
 
-    player.setPosition(sf::Vector2f(100.f, 100.f)); // Reset vị trí player
- }
-
-
+        player.setPosition(sf::Vector2f(100.f, 100.f)); // Reset vị trí player
+    }
 
     // va ham voi nguoi choi
 
     sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
-    for (auto& enemy : enemies)
+    for (auto &enemy : enemies)
     {
         if (enemy.isHit(playerBounds))
         {
@@ -284,16 +282,15 @@ void Game::render()
     {
         player.draw(window);
 
-        for (const auto& bullet : bullets)
+        for (const auto &bullet : bullets)
             bullet.draw(window);
 
-        for (const auto& enemy : enemies)
+        for (const auto &enemy : enemies)
             enemy.draw(window);
 
-    window.draw(scoreText);
-    window.draw(waveText);
-    window.draw(highScoreText);
-
+        window.draw(scoreText);
+        window.draw(waveText);
+        window.draw(highScoreText);
 
         if (!isRunning)
         {
@@ -322,7 +319,6 @@ void Game::spawnEnemy()
     Enemy e(x, y);
     e.setSpeed(50.f * std::pow(1.35f, waveNumber)); // tăng 35% mỗi wave
 
-
     enemies.push_back(e);
     enemySpawnedCount++;
 }
@@ -350,4 +346,3 @@ void Game::saveHighScore()
         file.close();
     }
 }
-
