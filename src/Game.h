@@ -7,6 +7,8 @@
 #include "Enemy.h"
 #include "Bullet.h"
 #include <vector>
+#include <fstream> // để đọc/ghi file
+
 
 class Game
 {
@@ -20,9 +22,9 @@ private:
     std::vector<Bullet> bullets;
     PlayerTank player;
 
-  // ảnh nền
-    sf::Texture backgroundTexture;   // ảnh nền
-    sf::Sprite backgroundSprite;     // sprite để vẽ ảnh
+    // ảnh nền
+    sf::Texture backgroundTexture; // ảnh nền
+    sf::Sprite backgroundSprite;   // sprite để vẽ ảnh
 
     // Văn bản
     sf::Font font;
@@ -38,7 +40,12 @@ private:
     sf::Sound shootSound;
     sf::Sound explosionSound;
 
+    // Điểm cao nhất
+    int highScore = 0;
+    sf::Text highScoreText;
 
+    void loadHighScore(); // đọc từ file
+    void saveHighScore(); // ghi vào file
 public:
     Game();
     void run();

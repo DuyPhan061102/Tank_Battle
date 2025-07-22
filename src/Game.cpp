@@ -40,6 +40,13 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true)
     gameOverText.setFillColor(sf::Color::Red);
     gameOverText.setPosition(250.f, 250.f);
 
+    // sau khi khởi tạo font
+    loadHighScore();
+    highScoreText.setFont(font);
+    highScoreText.setCharacterSize(24);
+    highScoreText.setFillColor(sf::Color::Yellow);
+    highScoreText.setPosition(10.f, 40.f); // dưới điểm hiện tại
+    highScoreText.setString("High Score: " + std::to_string(highScore));
     // Tải âm thanh bắn
     if (!shootBuffer.loadFromFile("assets/Sounds/shoot.wav"))
     {
@@ -164,13 +171,21 @@ void Game::update(float dt)
                        [](const Enemy &e)
                        { return e.shouldBeRemoved(); }),
         enemies.end());
-    // va ham voii nguoi choi
+    // va ham voi nguoi choi
     sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
     for (auto &enemy : enemies)
     {
         if (enemy.isHit(playerBounds))
         {
             isRunning = false;
+
+            if (score > highScore)
+            {
+                highScore = score;
+                saveHighScore();
+                highScoreText.setString("High Score: " + std::to_string(highScore));
+            }
+
             break;
         }
     }
@@ -196,6 +211,8 @@ void Game::render()
     }
 
     window.draw(scoreText);
+    window.draw(highScoreText);
+
 
     if (!isRunning)
     {
@@ -210,4 +227,27 @@ void Game::spawnEnemy()
     float x = static_cast<float>(rand() % 700 + 50);
     float y = static_cast<float>(rand() % 500 + 50);
     enemies.emplace_back(x, y);
+}
+void Game::loadHighScore()
+{
+    std::ifstream file("highscore.txt");
+    if (file.is_open())
+    {
+        file >> highScore;
+        file.close();
+    }
+    else
+    {
+        highScore = 0;
+    }
+}
+
+void Game::saveHighScore()
+{
+    std::ofstream file("highscore.txt");
+    if (file.is_open())
+    {
+        file << highScore;
+        file.close();
+    }
 }
