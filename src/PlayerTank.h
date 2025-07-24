@@ -1,10 +1,9 @@
-// PlayerTank.h
 #pragma once
 #include "Tank.h"
 #include <SFML/Graphics.hpp>
 #include "Bullet.h"
 #include <vector>
-
+#include <cmath>
 
 class PlayerTank : public Tank
 {
