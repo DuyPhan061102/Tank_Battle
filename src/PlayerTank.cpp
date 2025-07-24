@@ -2,20 +2,30 @@
 #include "PlayerTank.h"
 #include <SFML/Window/Keyboard.hpp>
 #include <SFML/Graphics.hpp> 
+#include <cmath>
 
 PlayerTank::PlayerTank()
 {
     speed = 200.f;
     body.setFillColor(sf::Color::Green);
-    //thêm máu
-    maxHP = 100;
-    hp = maxHP;
+
+    // Khởi tạo thanh máu
+    currentHealth = 100;
+    maxHealth = 100;
+
+    healthBarBack.setSize(sf::Vector2f(100, 10));
+    healthBarBack.setFillColor(sf::Color::Red);
+    healthBarBack.setPosition(10, 10);
+
+    healthBarFront.setSize(sf::Vector2f(100, 10));
+    healthBarFront.setFillColor(sf::Color::Green);
+    healthBarFront.setPosition(10, 10);
 }
 
 void PlayerTank::handleInput()
 {
     movement = { 0.f, 0.f };
-    float angle = body.getRotation(); // giữ nguyên nếu không di chuyển
+    float angle = body.getRotation();
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
     {
@@ -38,24 +48,43 @@ void PlayerTank::handleInput()
         angle = 0.f;
     }
 
-    // Nếu di chuyển theo đường chéo
-    if (movement.x != 0.f && movement.y != 0.f)
+    if (movement.x != 0.f || movement.y != 0.f)
     {
         angle = std::atan2(movement.y, movement.x) * 180.f / 3.14159f;
+        body.setRotation(angle);
     }
 
-    body.setRotation(angle);
-
+    // Bắn đạn
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
+    {
+        shoot();
+    }
 }
-void PlayerTank::draw(sf::RenderWindow &window) const
+
+void PlayerTank::draw(sf::RenderWindow& window) const
 {
-    window.draw(body); // Hoặc bất kỳ logic custom nào bạn muốn
+    window.draw(body);
     drawHP(window);
+
+    for (const auto& b : bullets)
+        b.draw(window);
 }
 void PlayerTank::update(float deltaTime)
 {
     handleInput();
     move(movement.x * speed * deltaTime, movement.y * speed * deltaTime);
+    updateHealthBar();
+
+    for (auto& b : bullets) {
+        b.update(deltaTime);
+    }
+
+    
+    bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
+        [](const Bullet& b) {
+            sf::Vector2f pos = b.getPosition();
+            return pos.x < 0 || pos.x > 800 || pos.y < 0 || pos.y > 600;
+        }), bullets.end());
 }
 void PlayerTank::move(float dx, float dy)
 {
@@ -63,29 +92,54 @@ void PlayerTank::move(float dx, float dy)
 }
 void PlayerTank::shoot()
 {
+    float rotation = body.getRotation(); // Độ
+    float rad = rotation * 3.14159265f / 180.f; // Radian
+
+    sf::Vector2f direction(std::cos(rad), std::sin(rad)); 
+
+    sf::Vector2f startPos = body.getPosition() + direction * 30.f; // Vị trí tank
+
+    float bulletSpeed = 300.f;
+    Bullet newBullet(startPos, direction, bulletSpeed);
+    bullets.push_back(newBullet);
 }
-void PlayerTank::takeDamage(int dmg)
+void PlayerTank::takeDamage(int damage)
 {
-    hp -= dmg;
-    if (hp < 0)
-        hp = 0;
+    currentHealth -= damage;
+    if (currentHealth < 0)
+        currentHealth = 0;
 }
 
 int PlayerTank::getHP() const
 {
-    return hp;
+    return currentHealth;
 }
 
 void PlayerTank::drawHP(sf::RenderWindow& window) const
 {
-    sf::RectangleShape back(sf::Vector2f(100, 10));
-    back.setFillColor(sf::Color::Red);
-    back.setPosition(10, 10); // góc trái màn hình
+    window.draw(healthBarBack);
+    window.draw(healthBarFront);
+}
 
-    sf::RectangleShape front(sf::Vector2f((float)hp / maxHP * 100, 10));
-    front.setFillColor(sf::Color::Green);
-    front.setPosition(10, 10);
+void PlayerTank::updateHealthBar()
+{
+    float healthPercent = static_cast<float>(currentHealth) / maxHealth;
+    healthBarFront.setSize(sf::Vector2f(100 * healthPercent, 10));
+    sf::Vector2f tankPos = body.getPosition();
+    sf::Vector2f hpPos(tankPos.x - 50, tankPos.y - 40);
+    healthBarBack.setPosition(hpPos);
+    healthBarFront.setPosition(hpPos);
+}
 
-    window.draw(back);
-    window.draw(front);
+void PlayerTank::setWindow(sf::RenderWindow* window)
+{
+    windowPtr = window;
+}
+
+const std::vector<Bullet>& PlayerTank::getBullets() const {
+    return bullets;
+}
+
+std::vector<Bullet>& PlayerTank::getBullets() {
+    return bullets;
 }

@@ -8,6 +8,7 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true)
     window.setFramerateLimit(60);
     std::srand(static_cast<unsigned>(time(nullptr)));
     score = 0;
+    player.setWindow(&window);
 
     // tai background
     if (!backgroundTexture.loadFromFile("assets/Images/background.jpg"))
@@ -82,6 +83,10 @@ void Game::processEvents()
         if (event.type == sf::Event::Closed)
             window.close();
     }
+    if (isRunning)
+    {
+        player.handleInput(); 
+    }
 }
 
 void Game::update(float dt)
@@ -91,62 +96,32 @@ void Game::update(float dt)
 
     player.update(dt);
 
-    // -- BẮN ĐẠN nếu nhấn phím SPACE --
-
-    static sf::Clock shootClock;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-    {
-        if (shootClock.getElapsedTime().asMilliseconds() > 300)
-        {
-            sf::Vector2f startPos = player.getPosition();
-            sf::Vector2f dir(1.f, 0.f);
-            bullets.emplace_back(startPos, dir);
-            shootSound.play();
-            shootClock.restart();
-        }
-    }
-
-    // Sinh enemy mỗi 3s
+    // Spawn enemy mỗi 3 giây
     if (enemySpawnClock.getElapsedTime().asSeconds() > 3.f)
     {
         spawnEnemy();
         enemySpawnClock.restart();
     }
 
-    // Cập nhật vị trí enemy
-
-    for (auto &enemy : enemies)
-    {
+    for (auto& enemy : enemies)
         enemy.update(dt);
-    }
 
-    // -- Cập nhật vị trí đạn --
-    for (auto &bullet : bullets)
-    {
+    // Cập nhật đạn
+    auto& bullets = player.getBullets();
+    for (auto& bullet : bullets)
         bullet.update(dt);
-    }
 
-    bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
-                                 [this](const Bullet &b)
-                                 {
-                                     return b.isOffScreen(window);
-                                 }),
-                  bullets.end());
-
-    // -- Va chạm giữa đạn và enemy --
-    // THAY ĐỔI: không xóa enemy tại đây, để nó có thời gian hiện hiệu ứng
-
+    // Xử lý va chạm đạn <-> enemy
     for (auto b = bullets.begin(); b != bullets.end();)
     {
         bool bulletErased = false;
-        for (auto &enemy : enemies)
+        for (auto& enemy : enemies)
         {
             if (enemy.isHit(b->getBounds()))
             {
-                b = bullets.erase(b); // Xoá đạn
+                b = bullets.erase(b);
                 explosionSound.play();
-
-                enemy.markToRemove(); // cần thêm phương thức này trong Enemy
+                enemy.markToRemove();
                 bulletErased = true;
 
                 score += 100;
@@ -158,25 +133,25 @@ void Game::update(float dt)
             ++b;
     }
 
-    // THAY ĐỔI: xoá enemy đã chết sau hiệu ứng
+    // Xóa enemy đã chết
     enemies.erase(
         std::remove_if(enemies.begin(), enemies.end(),
-                       [](const Enemy &e)
-                       { return e.shouldBeRemoved(); }),
+            [](const Enemy& e) { return e.shouldBeRemoved(); }),
         enemies.end());
-    // va ham voii nguoi choi
+
+    // Va chạm enemy với player
     sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
-    for (auto &enemy : enemies)
+    for (auto& enemy : enemies)
     {
         if (enemy.isHit(playerBounds))
         {
-            player.takeDamage(20); // Tuỳ mức sát thương, ví dụ 20
+            player.takeDamage(20);
 
             if (player.getHP() <= 0)
             {
                 isRunning = false;
             }
-            break; // Chỉ trừ máu 1 lần mỗi enemy chạm
+            break;
         }
     }
 }
@@ -188,10 +163,7 @@ void Game::render()
     // Vẽ player
     player.draw(window);
 
-    for (const auto &bullet : bullets)
-    {
-        bullet.draw(window);
-    }
+    
 
     // Vẽ enemy
 
