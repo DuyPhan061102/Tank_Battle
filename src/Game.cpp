@@ -20,6 +20,16 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
             window.getSize().y / backgroundSprite.getLocalBounds().height);
     }
 
+    if (!menuBackgroundTexture.loadFromFile("assets/Images/menu_background.jpg"))
+        std::cout << "❌ Không thể tải menu_background.jpg\n";
+    else
+    {
+        menuBackgroundSprite.setTexture(menuBackgroundTexture);
+        menuBackgroundSprite.setScale(
+            window.getSize().x / menuBackgroundSprite.getLocalBounds().width,
+            window.getSize().y / menuBackgroundSprite.getLocalBounds().height);
+    }
+
     if (!font.loadFromFile("assets/Fonts/arial.ttf"))
         std::cout << "❌ Không thể tải font arial.ttf\n";
 
@@ -41,39 +51,38 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
     gameOverText.setFillColor(sf::Color::Red);
     gameOverText.setPosition(250.f, 150.f);
 
-    // Buttons
+    float centerX = window.getSize().x / 2.f;
+
     playButton.setFont(font);
     playButton.setString("Play");
     playButton.setCharacterSize(36);
-    playButton.setFillColor(sf::Color::White);
-    playButton.setPosition(300.f, 250.f);
+    playButton.setFillColor(sf::Color::Black);
+    playButton.setPosition(centerX - playButton.getGlobalBounds().width / 2.f, 250.f);
 
     quitButton.setFont(font);
     quitButton.setString("Quit");
     quitButton.setCharacterSize(36);
-    quitButton.setFillColor(sf::Color::White);
-    quitButton.setPosition(300.f, 320.f);
+    quitButton.setFillColor(sf::Color::Black);
+    quitButton.setPosition(centerX - quitButton.getGlobalBounds().width / 2.f, 320.f);
 
     retryButton.setFont(font);
     retryButton.setString("Retry");
     retryButton.setCharacterSize(36);
-    retryButton.setFillColor(sf::Color::White);
-    retryButton.setPosition(300.f, 250.f);
+    retryButton.setFillColor(sf::Color::Black);
+    retryButton.setPosition(centerX - retryButton.getGlobalBounds().width / 2.f, 250.f);
 
     exitButton.setFont(font);
     exitButton.setString("Exit");
     exitButton.setCharacterSize(36);
-    exitButton.setFillColor(sf::Color::White);
-    exitButton.setPosition(300.f, 320.f);
+    exitButton.setFillColor(sf::Color::Black);
+    exitButton.setPosition(centerX - exitButton.getGlobalBounds().width / 2.f, 320.f);
 
-    // sau khi khởi tạo font
     loadHighScore();
     highScoreText.setFont(font);
     highScoreText.setCharacterSize(24);
     highScoreText.setFillColor(sf::Color::Yellow);
-    highScoreText.setPosition(10.f, 70.f); // dưới điểm hiện tại
+    highScoreText.setPosition(10.f, 70.f);
     highScoreText.setString("High Score: " + std::to_string(highScore));
-    // Tải âm thanh bắn
 
     if (!shootBuffer.loadFromFile("assets/Sounds/shoot.wav"))
         std::cout << "❌ Không thể tải file shoot.wav\n";
@@ -125,6 +134,9 @@ void Game::processEvents()
                     scoreText.setString("Score: 0");
                     bullets.clear();
                     enemies.clear();
+                    waveNumber = 1;
+                    enemyPerWave = 3;
+                    enemySpawnedCount = 0;
                 }
                 else if (quitButton.getGlobalBounds().contains(mousePos))
                 {
@@ -141,6 +153,10 @@ void Game::processEvents()
                     scoreText.setString("Score: 0");
                     bullets.clear();
                     enemies.clear();
+
+                    waveNumber = 1;
+                    enemyPerWave = 3;
+                    enemySpawnedCount = 0;
                 }
                 else if (exitButton.getGlobalBounds().contains(mousePos))
                 {
@@ -150,6 +166,7 @@ void Game::processEvents()
         }
     }
 }
+
 
 void Game::update(float dt)
 {
@@ -174,6 +191,8 @@ void Game::update(float dt)
     if (!isRunning)
         return;
 
+    waveText.setString("Wave: " + std::to_string(waveNumber));
+
     player.update(dt);
 
     static sf::Clock shootClock;
@@ -195,23 +214,23 @@ void Game::update(float dt)
         enemySpawnClock.restart();
     }
 
-    for (auto &enemy : enemies)
+    for (auto& enemy : enemies)
         enemy.update(dt);
 
-    for (auto &bullet : bullets)
+    for (auto& bullet : bullets)
         bullet.update(dt);
 
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
-                                 [this](const Bullet &b)
-                                 {
-                                     return b.isOffScreen(window);
-                                 }),
-                  bullets.end());
+        [this](const Bullet& b)
+        {
+            return b.isOffScreen(window);
+        }),
+        bullets.end());
 
     for (auto b = bullets.begin(); b != bullets.end();)
     {
         bool bulletErased = false;
-        for (auto &enemy : enemies)
+        for (auto& enemy : enemies)
         {
             if (enemy.isHit(b->getBounds()))
             {
@@ -230,8 +249,8 @@ void Game::update(float dt)
 
     enemies.erase(
         std::remove_if(enemies.begin(), enemies.end(),
-                       [](const Enemy &e)
-                       { return e.shouldBeRemoved(); }),
+            [](const Enemy& e)
+            { return e.shouldBeRemoved(); }),
         enemies.end());
 
     // va ham voii nguoi choi
@@ -248,7 +267,7 @@ void Game::update(float dt)
     // va ham voi nguoi choi
 
     sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
-    for (auto &enemy : enemies)
+    for (auto& enemy : enemies)
     {
         if (enemy.isHit(playerBounds))
         {
@@ -271,38 +290,51 @@ void Game::update(float dt)
 void Game::render()
 {
     window.clear();
-    window.draw(backgroundSprite);
 
     if (gameState == GameState::Menu)
     {
+        window.draw(menuBackgroundSprite);
+
+        playButton.setFillColor(sf::Color::Black);
+        quitButton.setFillColor(sf::Color::Black);
+
+        // Lấy vị trí chuột
+        sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+
+        // Hover màu vàng
+        if (playButton.getGlobalBounds().contains(mousePos))
+            playButton.setFillColor(sf::Color::Yellow);
+        if (quitButton.getGlobalBounds().contains(mousePos))
+            quitButton.setFillColor(sf::Color::Yellow);
+
+        // Vẽ nút
         window.draw(playButton);
         window.draw(quitButton);
     }
-    else if (gameState == GameState::Playing)
+    else
     {
-        player.draw(window);
+        window.draw(backgroundSprite);
 
-        for (const auto &bullet : bullets)
-            bullet.draw(window);
-
-        for (const auto &enemy : enemies)
-            enemy.draw(window);
-
-        window.draw(scoreText);
-        window.draw(waveText);
-        window.draw(highScoreText);
-
-        if (!isRunning)
+        if (gameState == GameState::Playing)
+        {
+            player.draw(window);
+            for (const auto& bullet : bullets)
+                bullet.draw(window);
+            for (const auto& enemy : enemies)
+                enemy.draw(window);
+            window.draw(scoreText);
+            window.draw(waveText);
+            window.draw(highScoreText);
+            if (!isRunning)
+                window.draw(gameOverText);
+        }
+        else if (gameState == GameState::GameOver)
         {
             window.draw(gameOverText);
+            window.draw(scoreText);
+            window.draw(retryButton);
+            window.draw(exitButton);
         }
-    }
-    else if (gameState == GameState::GameOver)
-    {
-        window.draw(gameOverText);
-        window.draw(scoreText);
-        window.draw(retryButton);
-        window.draw(exitButton);
     }
 
     window.display();

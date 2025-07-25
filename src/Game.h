@@ -38,6 +38,10 @@ private:
     sf::Texture backgroundTexture; // ảnh nền
     sf::Sprite backgroundSprite;   // sprite để vẽ ảnh
 
+    // ảnh menu
+    sf::Texture menuBackgroundTexture; // ảnh nền menu
+    sf::Sprite menuBackgroundSprite;
+
     // Font và văn bản
     sf::Font font;
     sf::Text scoreText;
