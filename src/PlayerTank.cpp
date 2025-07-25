@@ -8,8 +8,6 @@ PlayerTank::PlayerTank()
 {
     speed = 200.f;
     body.setFillColor(sf::Color::Green);
-
-    // Khởi tạo thanh máu
     currentHealth = 100;
     maxHealth = 100;
 
@@ -54,10 +52,14 @@ void PlayerTank::handleInput()
         body.setRotation(angle);
     }
 
-    // Bắn đạn
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-    {
-        shoot();
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
+        if (!wasSpacePressedLastFrame) {
+            shoot();  
+        }
+        wasSpacePressedLastFrame = true;
+    }
+    else {
+        wasSpacePressedLastFrame = false;  
     }
 }
 
@@ -92,12 +94,12 @@ void PlayerTank::move(float dx, float dy)
 }
 void PlayerTank::shoot()
 {
-    float rotation = body.getRotation(); // Độ
-    float rad = rotation * 3.14159265f / 180.f; // Radian
+    float rotation = body.getRotation(); 
+    float rad = rotation * 3.14159265f / 180.f; 
 
     sf::Vector2f direction(std::cos(rad), std::sin(rad)); 
 
-    sf::Vector2f startPos = body.getPosition() + direction * 30.f; // Vị trí tank
+    sf::Vector2f startPos = body.getPosition() + direction * 30.f; 
 
     float bulletSpeed = 300.f;
     Bullet newBullet(startPos, direction, bulletSpeed);

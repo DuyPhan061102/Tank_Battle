@@ -37,4 +37,5 @@ private:
     sf::RenderWindow* windowPtr = nullptr;
     sf::Clock shootClock;
     float shootCooldown = 0.3f;
+    bool wasSpacePressedLastFrame = false;
 };
