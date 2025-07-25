@@ -11,7 +11,7 @@ private:
 	float speed;
 
 public:
-	Bullet(const sf::Vector2f &startPos, const sf::Vector2f &dir, float speed = 400.f);
+	Bullet(const sf::Vector2f &startPos, const sf::Vector2f &dir, float speed = 100.f);
 	void update(float dt);
 	void draw(sf::RenderWindow &window) const;
 	bool isOffScreen(const sf::RenderWindow &window) const;

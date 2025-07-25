@@ -9,6 +9,7 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
     window.setFramerateLimit(60);
     std::srand(static_cast<unsigned>(time(nullptr)));
     score = 0;
+    player.setWindow(&window);
 
     if (!backgroundTexture.loadFromFile("assets/Images/background.jpg"))
         std::cout << "❌ Không thể tải background.jpg\n";
@@ -175,6 +176,10 @@ void Game::processEvents()
             }
         }
     }
+    if (isRunning)
+    {
+        player.handleInput(); 
+    }
 }
 
 
@@ -203,8 +208,10 @@ void Game::update(float dt)
 
     waveText.setString("Wave: " + std::to_string(waveNumber));
 
-    player.update(dt);
 
+    // Spawn enemy mỗi 3 giây
+    player.update(dt);
+  
     static sf::Clock shootClock;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
     {
@@ -227,6 +234,7 @@ void Game::update(float dt)
     for (auto& enemy : enemies)
         enemy.update(dt);
 
+
     for (auto& bullet : bullets)
         bullet.update(dt);
 
@@ -237,6 +245,7 @@ void Game::update(float dt)
         }),
         bullets.end());
 
+    // Xử lý va chạm đạn <-> enemy
     for (auto b = bullets.begin(); b != bullets.end();)
     {
         bool bulletErased = false;
@@ -257,13 +266,13 @@ void Game::update(float dt)
             ++b;
     }
 
+    // Xóa enemy đã chết
     enemies.erase(
         std::remove_if(enemies.begin(), enemies.end(),
-            [](const Enemy& e)
-            { return e.shouldBeRemoved(); }),
+            [](const Enemy& e) { return e.shouldBeRemoved(); }),
         enemies.end());
 
-    // va ham voii nguoi choi
+    // Nếu đã spawn đủ enemy và hiện tại đã clear hết -> tăng wave mới
     if (enemies.empty() && enemySpawnedCount >= enemyPerWave)
     {
         waveNumber++;
@@ -274,22 +283,26 @@ void Game::update(float dt)
         player.setPosition(sf::Vector2f(100.f, 100.f)); // Reset vị trí player
     }
 
-    // va ham voi nguoi choi
+    // Va chạm enemy với player
 
     sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
     for (auto& enemy : enemies)
     {
         if (enemy.isHit(playerBounds))
         {
-            isRunning = false;
+            player.takeDamage(20);
 
-            gameState = GameState::GameOver;
-
-            if (score > highScore)
+            if (player.getHP() <= 0)
             {
-                highScore = score;
-                saveHighScore();
-                highScoreText.setString("High Score: " + std::to_string(highScore));
+                isRunning = false;
+                gameState = GameState::GameOver;
+
+                if (score > highScore)
+                {
+                    highScore = score;
+                    saveHighScore();
+                    highScoreText.setString("High Score: " + std::to_string(highScore));
+                }
             }
 
             break;
