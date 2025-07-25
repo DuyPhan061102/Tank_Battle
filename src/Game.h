@@ -66,6 +66,8 @@ private:
     void loadHighScore(); // đọc từ file
     void saveHighScore(); // ghi vào file
 
+    sf::Music backgroundMusic; // cài nhạc nền
+
 
 public:
     Game();

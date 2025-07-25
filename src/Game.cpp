@@ -90,6 +90,16 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
         explosionSound.setBuffer(explosionBuffer);
         explosionSound.setVolume(100.f);
     }
+    if (!backgroundMusic.openFromFile("assets/Sounds/background.ogg"))
+    {
+        std::cout << "❌ Không thể mở background.ogg\n";
+    }
+    else
+    {
+        backgroundMusic.setLoop(true);   // lặp lại vô hạn
+        backgroundMusic.setVolume(30.f); // âm lượng (0 - 100)
+        backgroundMusic.play();          // phát nhạc
+    }
 }
 
 void Game::run()
