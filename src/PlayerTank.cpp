@@ -2,6 +2,7 @@
 #include "PlayerTank.h"
 #include <SFML/Window/Keyboard.hpp>
 #include <SFML/Graphics.hpp> 
+#include <SFML/Audio.hpp>
 #include <cmath>
 
 PlayerTank::PlayerTank()
@@ -92,6 +93,13 @@ void PlayerTank::move(float dx, float dy)
 {
     body.move(dx, dy);
 }
+
+sf::Sound* shootSoundPtr = nullptr;
+
+void PlayerTank::setShootSound(sf::Sound* sound) {
+    shootSoundPtr = sound;
+}
+
 void PlayerTank::shoot()
 {
     float rotation = body.getRotation(); 
@@ -104,6 +112,8 @@ void PlayerTank::shoot()
     float bulletSpeed = 300.f;
     Bullet newBullet(startPos, direction, bulletSpeed);
     bullets.push_back(newBullet);
+
+    if (shootSoundPtr) shootSoundPtr->play();
 }
 void PlayerTank::takeDamage(int damage)
 {

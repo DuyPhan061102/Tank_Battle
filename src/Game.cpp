@@ -10,6 +10,7 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
     std::srand(static_cast<unsigned>(time(nullptr)));
     score = 0;
     player.setWindow(&window);
+    player.setShootSound(&shootSound);
 
     if (!backgroundTexture.loadFromFile("assets/Images/background.jpg"))
         std::cout << "❌ Không thể tải background.jpg\n";
@@ -178,10 +179,9 @@ void Game::processEvents()
     }
     if (isRunning)
     {
-        player.handleInput(); 
+        player.handleInput();
     }
 }
-
 
 void Game::update(float dt)
 {
@@ -208,22 +208,8 @@ void Game::update(float dt)
 
     waveText.setString("Wave: " + std::to_string(waveNumber));
 
-
     // Spawn enemy mỗi 3 giây
     player.update(dt);
-  
-    static sf::Clock shootClock;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-    {
-        if (shootClock.getElapsedTime().asMilliseconds() > 300)
-        {
-            sf::Vector2f startPos = player.getPosition();
-            sf::Vector2f dir(1.f, 0.f);
-            bullets.emplace_back(startPos, dir);
-            shootSound.play();
-            shootClock.restart();
-        }
-    }
 
     if (enemySpawnClock.getElapsedTime().asSeconds() > 3.f)
     {
@@ -231,45 +217,46 @@ void Game::update(float dt)
         enemySpawnClock.restart();
     }
 
-    for (auto& enemy : enemies)
+    for (auto &enemy : enemies)
         enemy.update(dt);
 
-
-    for (auto& bullet : bullets)
+    for (auto &bullet : bullets)
         bullet.update(dt);
 
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
-        [this](const Bullet& b)
-        {
-            return b.isOffScreen(window);
-        }),
-        bullets.end());
+                                 [this](const Bullet &b)
+                                 {
+                                     return b.isOffScreen(window);
+                                 }),
+                  bullets.end());
 
     // Xử lý va chạm đạn <-> enemy
-    for (auto b = bullets.begin(); b != bullets.end();)
+auto& playerBullets = player.getBullets();
+for (auto b = playerBullets.begin(); b != playerBullets.end(); )
+{
+    bool bulletErased = false;
+    for (auto& enemy : enemies)
     {
-        bool bulletErased = false;
-        for (auto& enemy : enemies)
+        if (enemy.isHit(b->getBounds()))
         {
-            if (enemy.isHit(b->getBounds()))
-            {
-                b = bullets.erase(b);
-                explosionSound.play();
-                enemy.markToRemove();
-                bulletErased = true;
-                score += 100;
-                scoreText.setString("Score: " + std::to_string(score));
-                break;
-            }
+            b = playerBullets.erase(b);
+            explosionSound.play();
+            enemy.markToRemove();
+            bulletErased = true;
+            score += 100;
+            scoreText.setString("Score: " + std::to_string(score));
+            break;
         }
-        if (!bulletErased)
-            ++b;
     }
+    if (!bulletErased)
+        ++b;
+}
 
     // Xóa enemy đã chết
     enemies.erase(
         std::remove_if(enemies.begin(), enemies.end(),
-            [](const Enemy& e) { return e.shouldBeRemoved(); }),
+                       [](const Enemy &e)
+                       { return e.shouldBeRemoved(); }),
         enemies.end());
 
     // Nếu đã spawn đủ enemy và hiện tại đã clear hết -> tăng wave mới
@@ -286,7 +273,7 @@ void Game::update(float dt)
     // Va chạm enemy với player
 
     sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
-    for (auto& enemy : enemies)
+    for (auto &enemy : enemies)
     {
         if (enemy.isHit(playerBounds))
         {
@@ -341,9 +328,11 @@ void Game::render()
         if (gameState == GameState::Playing)
         {
             player.draw(window);
-            for (const auto& bullet : bullets)
+            /* for (const auto &bullet : bullets)
+                 bullet.draw(window);*/
+            for (const auto &bullet : player.getBullets())
                 bullet.draw(window);
-            for (const auto& enemy : enemies)
+            for (const auto &enemy : enemies)
                 enemy.draw(window);
             window.draw(scoreText);
             window.draw(waveText);
