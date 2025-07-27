@@ -1,3 +1,4 @@
+//Game.h
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
@@ -8,6 +9,7 @@
 #include <vector>
 #include <cmath>
 #include <fstream> // để đọc/ghi file
+#include <memory>
 
 // Trạng thái của game
 enum class GameState
@@ -30,7 +32,7 @@ private:
     GameState gameState;     // trạng thái hiện tại của game
     bool isRunning;
 
-    std::vector<Enemy> enemies;
+    std::vector<std::unique_ptr<Enemy>> enemies;
     std::vector<Bullet> bullets;
     PlayerTank player;
 

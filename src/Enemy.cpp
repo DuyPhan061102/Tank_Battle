@@ -1,5 +1,7 @@
+// Enemy.cpp
 #include "Enemy.h"
 #include <cstdlib>
+#include <iostream>
 
 Enemy::Enemy(float x, float y)
 {
@@ -10,6 +12,14 @@ Enemy::Enemy(float x, float y)
     timeSinceDirectionChange = 0.f;
     isHitEffect = false;
     toBeRemoved = false;
+
+    // Load ảnh tank enemy
+    if (!tankTexture.loadFromFile("assets/Images/enemy_tank.png"))
+        std::cout << "❌ Không thể tải enemy_tank.png\n";
+    else {
+        tankSprite.setTexture(tankTexture);
+        tankSprite.setOrigin(tankTexture.getSize().x / 2.f, tankTexture.getSize().y / 2.f);
+    }
 
     int dir = rand() % 4;
     if (dir == 0)
@@ -34,6 +44,10 @@ void Enemy::update(float deltaTime)
         direction.y = -direction.y;
 
     body.move(direction * speed * deltaTime);
+
+    // Cập nhật vị trí sprite theo body
+    tankSprite.setPosition(body.getPosition().x + 20, body.getPosition().y + 20);
+
     timeSinceDirectionChange += deltaTime;
 
     if (timeSinceDirectionChange > 2.f)
@@ -55,10 +69,16 @@ void Enemy::update(float deltaTime)
     {
         toBeRemoved = true;
     }
+
+    std::cout << "Enemy body pos: " << body.getPosition().x << ", " << body.getPosition().y << std::endl;
+    std::cout << "Enemy sprite pos: " << tankSprite.getPosition().x << ", " << tankSprite.getPosition().y << std::endl;
 }
 void Enemy::draw(sf::RenderWindow &window) const
 {
-    window.draw(body);
+    if (tankTexture.getSize().x > 0)
+        window.draw(tankSprite);
+    else
+        window.draw(body);
 }
 
 bool Enemy::isHit(const sf::FloatRect &bounds)

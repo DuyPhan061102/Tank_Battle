@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp> 
 #include <SFML/Audio.hpp>
 #include <cmath>
+#include <iostream>
 
 PlayerTank::PlayerTank()
 {
@@ -11,6 +12,15 @@ PlayerTank::PlayerTank()
     body.setFillColor(sf::Color::Green);
     currentHealth = 100;
     maxHealth = 100;
+
+    // Load ảnh tank
+    if (!tankTexture.loadFromFile("assets/Images/player_tank.png"))
+        std::cout << "❌ Không thể tải player_tank.png\n";
+    else {
+        tankSprite.setTexture(tankTexture);
+        tankSprite.setOrigin(tankTexture.getSize().x / 2.f, tankTexture.getSize().y / 2.f);
+        tankSprite.setPosition(body.getPosition());
+    }
 
     healthBarBack.setSize(sf::Vector2f(100, 10));
     healthBarBack.setFillColor(sf::Color::Red);
@@ -66,7 +76,17 @@ void PlayerTank::handleInput()
 
 void PlayerTank::draw(sf::RenderWindow& window) const
 {
-    window.draw(body);
+    if (tankTexture.getSize().x > 0)
+    {
+        sf::Sprite sprite = tankSprite; // tạo bản sao
+        sprite.setPosition(body.getPosition().x + 20, body.getPosition().y + 20);
+        sprite.setRotation(body.getRotation());
+        window.draw(sprite);
+    }
+    else
+    {
+        window.draw(body);
+    }
     drawHP(window);
 
     for (const auto& b : bullets)

@@ -1,3 +1,4 @@
+// Player.h
 #pragma once
 #include "Tank.h"
 #include <SFML/Graphics.hpp>
@@ -29,6 +30,8 @@ public:
 
 
 private:
+    sf::Texture tankTexture;
+    sf::Sprite tankSprite;
     sf::Vector2f movement;
     int maxHealth;
     int currentHealth;
