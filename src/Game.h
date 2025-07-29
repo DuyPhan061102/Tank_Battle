@@ -7,9 +7,10 @@
 #include "Bullet.h"
 #include <vector>
 #include <cmath>
-#include <fstream> // để đọc/ghi file
+#include <fstream> 
+#include <memory>
 
-// Trạng thái của game
+
 enum class GameState
 {
     Menu,
@@ -30,7 +31,7 @@ private:
     GameState gameState;     // trạng thái hiện tại của game
     bool isRunning;
 
-    std::vector<Enemy> enemies;
+    std::vector<std::unique_ptr<Enemy>> enemies;
     std::vector<Bullet> bullets;
     PlayerTank player;
 
