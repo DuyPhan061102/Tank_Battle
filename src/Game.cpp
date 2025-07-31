@@ -166,10 +166,10 @@ void Game::processEvents()
                     scoreText.setString("Score: 0");
                     bullets.clear();
                     enemies.clear();
-
                     waveNumber = 1;
                     enemyPerWave = 3;
                     enemySpawnedCount = 0;
+                    player.resetHP(); // <-- Thêm dòng này để hồi máu cho player
                 }
                 else if (exitButton.getGlobalBounds().contains(mousePos))
                 {

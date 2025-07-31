@@ -2,6 +2,7 @@
 #include "Enemy.h"
 #include <cstdlib>
 #include <iostream>
+#include <cmath>
 
 Enemy::Enemy(float x, float y)
 {
@@ -47,6 +48,12 @@ void Enemy::update(float deltaTime)
 
     // Cập nhật vị trí sprite theo body
     tankSprite.setPosition(body.getPosition().x + 20, body.getPosition().y + 20);
+
+    // Thêm đoạn này để quay sprite theo hướng di chuyển
+    if (direction.x != 0.f || direction.y != 0.f) {
+        float angle = std::atan2(direction.y, direction.x) * 180.f / 3.14159265f;
+        tankSprite.setRotation(angle);
+    }
 
     timeSinceDirectionChange += deltaTime;
 

@@ -175,3 +175,8 @@ const std::vector<Bullet>& PlayerTank::getBullets() const {
 std::vector<Bullet>& PlayerTank::getBullets() {
     return bullets;
 }
+
+void PlayerTank::resetHP() {
+    currentHealth = maxHealth;
+    updateHealthBar();
+}
