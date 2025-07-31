@@ -9,13 +9,13 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
     window.setFramerateLimit(60);
     std::srand(static_cast<unsigned>(time(nullptr)));
     score = 0;
+    loadHighScore();
     player.setWindow(&window);
     player.setShootSound(&shootSound);
 
     if (!backgroundTexture.loadFromFile("assets/Images/background.jpg"))
         std::cout << "❌ Không thể tải background.jpg\n";
-    else
-    {
+    else {
         backgroundSprite.setTexture(backgroundTexture);
         backgroundSprite.setScale(
             window.getSize().x / backgroundSprite.getLocalBounds().width,
@@ -24,8 +24,7 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
 
     if (!menuBackgroundTexture.loadFromFile("assets/Images/menu_background.jpg"))
         std::cout << "❌ Không thể tải menu_background.jpg\n";
-    else
-    {
+    else {
         menuBackgroundSprite.setTexture(menuBackgroundTexture);
         menuBackgroundSprite.setScale(
             window.getSize().x / menuBackgroundSprite.getLocalBounds().width,
@@ -34,6 +33,40 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
 
     if (!font.loadFromFile("assets/Fonts/arial.ttf"))
         std::cout << "❌ Không thể tải font arial.ttf\n";
+
+    // Load key textures
+    if (!wasdTexture.loadFromFile("assets/Images/key_wasd.png"))
+        std::cout << "Không thể tải ảnh WASD\n";
+    wasdSprite.setTexture(wasdTexture);
+    wasdSprite.setPosition(60.f, 300.f);  // Tuỳ chỉnh vị trí cho đẹp
+    wasdSprite.setScale(0.4f, 0.4f);       // Nếu ảnh to quá
+
+    if (!spaceTexture.loadFromFile("assets/Images/key_space.png"))
+        std::cout << "Không thể tải ảnh SPACE\n";
+    spaceSprite.setTexture(spaceTexture);
+    spaceSprite.setPosition(250.f, 320.f);
+    spaceSprite.setScale(0.3f, 0.3f);
+
+    if (!escTexture.loadFromFile("assets/Images/key_esc.png"))
+        std::cout << "Không thể tải ảnh ESC\n";
+    escSprite.setTexture(escTexture);
+    escSprite.setPosition(550.f, 320.f);
+    escSprite.setScale(0.5f, 0.5f);
+
+
+    // Tutorial box
+    tutorialBox.setSize(sf::Vector2f(700.f, 450.f));
+    tutorialBox.setFillColor(sf::Color(100, 100, 100, 200));
+    tutorialBox.setOutlineThickness(3.f);
+    tutorialBox.setOutlineColor(sf::Color::Black);
+    tutorialBox.setPosition(50.f, 75.f);
+
+    // Tutorial text
+    tutorialText.setFont(font);
+    tutorialText.setCharacterSize(22);
+    tutorialText.setFillColor(sf::Color::White);
+    tutorialText.setString("Instructions:\n\n- Use W / A / S / D to move the tank.\n- Press SPACE to shoot.\n- Press ESC to return in Menu.");
+    tutorialText.setPosition(80.f, 100.f);
 
     scoreText.setFont(font);
     scoreText.setCharacterSize(24);
@@ -55,29 +88,84 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
 
     float centerX = window.getSize().x / 2.f;
 
-    playButton.setFont(font);
-    playButton.setString("Play");
-    playButton.setCharacterSize(36);
-    playButton.setFillColor(sf::Color::Black);
-    playButton.setPosition(centerX - playButton.getGlobalBounds().width / 2.f, 250.f);
+    auto setupButton = [&](sf::Text& text, const std::string& str, float y) {
+        text.setFont(font);
+        text.setString(str);
+        text.setCharacterSize(36);
+        text.setFillColor(sf::Color::White);
+        text.setScale(1.3f, 1.3f);
+        float width = text.getGlobalBounds().width * 1.3f;
+        float height = text.getGlobalBounds().height * 1.3f;
+        text.setPosition(centerX - width / 2.f, y);
+        };
 
-    quitButton.setFont(font);
-    quitButton.setString("Quit");
-    quitButton.setCharacterSize(36);
-    quitButton.setFillColor(sf::Color::Black);
-    quitButton.setPosition(centerX - quitButton.getGlobalBounds().width / 2.f, 320.f);
+    setupButton(playButton, "Play", 250.f);
+    setupButton(quitButton, "Quit", 330.f);
+    setupButton(moreButton, "More", 410.f);
+    setupButton(retryButton, "Retry", 250.f);
+    setupButton(exitButton, "Exit", 330.f);
+    setupButton(tutorialButton, "Tutorial", 200.f);
+    setupButton(volumeButton, "Volume", 280.f);
+    setupButton(highScoreButton, "Highest Score", 360.f);
 
-    retryButton.setFont(font);
-    retryButton.setString("Retry");
-    retryButton.setCharacterSize(36);
-    retryButton.setFillColor(sf::Color::Black);
-    retryButton.setPosition(centerX - retryButton.getGlobalBounds().width / 2.f, 250.f);
+    auto setupBox = [](sf::RectangleShape& box, const sf::Text& text) {
+        box.setSize(sf::Vector2f(text.getGlobalBounds().width + 40.f, text.getGlobalBounds().height + 30.f));
+        box.setFillColor(sf::Color(150, 150, 150, 180));
+        box.setOutlineThickness(2.f);
+        box.setOutlineColor(sf::Color::Black);
+        box.setPosition(text.getPosition().x - 20.f, text.getPosition().y - 15.f);
+        };
 
-    exitButton.setFont(font);
-    exitButton.setString("Exit");
-    exitButton.setCharacterSize(36);
-    exitButton.setFillColor(sf::Color::Black);
-    exitButton.setPosition(centerX - exitButton.getGlobalBounds().width / 2.f, 320.f);
+    setupBox(playButtonBox, playButton);
+    setupBox(quitButtonBox, quitButton);
+    setupBox(moreButtonBox, moreButton);
+    setupBox(retryButtonBox, retryButton);
+    setupBox(exitButtonBox, exitButton);
+    setupBox(tutorialButtonBox, tutorialButton);
+    setupBox(volumeButtonBox, volumeButton);
+    setupBox(highScoreButtonBox, highScoreButton);
+    setupBox(musicButton, musicText);
+    setupBox(sfxButton, sfxText);
+
+    // Volume Toggle Text
+    musicText.setFont(font);
+    musicText.setCharacterSize(28);
+    musicText.setFillColor(sf::Color::White);
+    musicText.setString("MUSIC: ON");
+    musicText.setScale(1.1f, 1.1f);
+    musicText.setPosition(centerX - musicText.getGlobalBounds().width / 2.f, 200.f);
+
+    sfxText.setFont(font);
+    sfxText.setCharacterSize(28);
+    sfxText.setFillColor(sf::Color::White);
+    sfxText.setString("SFX: ON");
+    sfxText.setScale(1.1f, 1.1f);
+    sfxText.setPosition(centerX - sfxText.getGlobalBounds().width / 2.f, 280.f);
+
+    // Volume Toggle Boxes
+    musicButton.setSize(sf::Vector2f(musicText.getGlobalBounds().width + 40.f, musicText.getGlobalBounds().height + 30.f));
+    musicButton.setFillColor(sf::Color(150, 150, 150, 180));
+    musicButton.setOutlineThickness(2.f);
+    musicButton.setOutlineColor(sf::Color::Black);
+    musicButton.setPosition(musicText.getPosition().x - 20.f, musicText.getPosition().y - 15.f);
+
+    sfxButton.setSize(sf::Vector2f(sfxText.getGlobalBounds().width + 40.f, sfxText.getGlobalBounds().height + 30.f));
+    sfxButton.setFillColor(sf::Color(150, 150, 150, 180));
+    sfxButton.setOutlineThickness(2.f);
+    sfxButton.setOutlineColor(sf::Color::Black);
+    sfxButton.setPosition(sfxText.getPosition().x - 20.f, sfxText.getPosition().y - 15.f);
+
+    // Return to Menu
+    returnButton.setFont(font);
+    returnButton.setString("Return to Menu");
+    returnButton.setCharacterSize(40);
+    returnButton.setFillColor(sf::Color::White);
+    returnButton.setPosition(window.getSize().x / 2.f - 140.f, 530.f);
+
+    returnButtonBox.setFillColor(sf::Color(0, 0, 0, 150));
+    returnButtonBox.setSize(sf::Vector2f(returnButton.getGlobalBounds().width + 40.f, returnButton.getGlobalBounds().height + 30.f));
+    returnButtonBox.setPosition(returnButton.getPosition().x - 20.f, returnButton.getPosition().y - 15.f);
+
 
     loadHighScore();
     highScoreText.setFont(font);
@@ -86,32 +174,48 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
     highScoreText.setPosition(10.f, 70.f);
     highScoreText.setString("High Score: " + std::to_string(highScore));
 
+    // Hiển thị điểm cao nhất bên dưới nút Highest Score
+    highScoreMenuText.setFont(font);
+    highScoreMenuText.setCharacterSize(20);
+    highScoreMenuText.setFillColor(sf::Color::Black);
+    highScoreMenuText.setString("High Score: " + std::to_string(highScore));
+
+    // Căn giữa bên dưới highScoreButtonBox
+    float hsBoxCenter = highScoreButtonBox.getPosition().x + highScoreButtonBox.getSize().x / 2.f;
+    float hsTextWidth = highScoreMenuText.getGlobalBounds().width;
+    highScoreMenuText.setPosition(hsBoxCenter - hsTextWidth / 2.f,
+        highScoreButtonBox.getPosition().y + highScoreButtonBox.getSize().y + 8.f);
+
+
+    if (!clickBuffer.loadFromFile("assets/Sounds/click.wav"))
+        std::cout << "❌ Không thể tải click.wav\n";
+    else
+        clickSound.setBuffer(clickBuffer);
+
     if (!shootBuffer.loadFromFile("assets/Sounds/shoot.wav"))
         std::cout << "❌ Không thể tải file shoot.wav\n";
-    else
-    {
+    else {
         shootSound.setBuffer(shootBuffer);
         shootSound.setVolume(100.f);
     }
 
     if (!explosionBuffer.loadFromFile("assets/Sounds/explosion.wav"))
         std::cout << "❌ Không thể tải file explosion.wav\n";
-    else
-    {
+    else {
         explosionSound.setBuffer(explosionBuffer);
         explosionSound.setVolume(100.f);
     }
-    if (!backgroundMusic.openFromFile("assets/Sounds/background.ogg"))
-    {
+
+    if (!backgroundMusic.openFromFile("assets/Sounds/background.ogg")) {
         std::cout << "❌ Không thể mở background.ogg\n";
     }
-    else
-    {
-        backgroundMusic.setLoop(true);   // lặp lại vô hạn
-        backgroundMusic.setVolume(30.f); // âm lượng (0 - 100)
-        backgroundMusic.play();          // phát nhạc
+    else {
+        backgroundMusic.setLoop(true);
+        backgroundMusic.setVolume(30.f);
+        backgroundMusic.play();
     }
 }
+
 
 void Game::run()
 {
@@ -140,6 +244,7 @@ void Game::processEvents()
             {
                 if (playButton.getGlobalBounds().contains(mousePos))
                 {
+                    clickSound.play();
                     gameState = GameState::Playing;
                     isRunning = true;
                     score = 0;
@@ -152,31 +257,110 @@ void Game::processEvents()
                 }
                 else if (quitButton.getGlobalBounds().contains(mousePos))
                 {
+                    clickSound.play();
                     window.close();
+                }
+                else if (moreButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    gameState = GameState::MoreMenu;
+                }
+            }
+            else if (gameState == GameState::MoreMenu)
+            {
+                if (tutorialButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    gameState = GameState::Tutorial;
+                }
+                else if (volumeButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    gameState = GameState::Volume;
+                }
+                else if (highScoreButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    showHighScoreText = !showHighScoreText;
+                }
+                
+            }
+            else if (gameState == GameState::Volume)
+            {
+                if (musicButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    isMusicOn = !isMusicOn;
+                    musicText.setString("Music: " + std::string(isMusicOn ? "ON" : "OFF"));
+                    if (isMusicOn)
+                        backgroundMusic.play();
+                    else
+                        backgroundMusic.pause();
+                }
+                else if (sfxButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    isSFXOn = !isSFXOn;
+                    sfxText.setString("SFX: " + std::string(isSFXOn ? "ON" : "OFF"));
+                    shootSound.setVolume(isSFXOn ? 100.f : 0.f);
+                    explosionSound.setVolume(isSFXOn ? 100.f : 0.f);
+                    clickSound.setVolume(isSFXOn ? 100.f : 0.f);
+                }
+                else if (backButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    gameState = GameState::MoreMenu;
                 }
             }
             else if (gameState == GameState::GameOver)
             {
                 if (retryButton.getGlobalBounds().contains(mousePos))
                 {
+                    clickSound.play();
                     gameState = GameState::Playing;
                     isRunning = true;
                     score = 0;
                     scoreText.setString("Score: 0");
                     bullets.clear();
                     enemies.clear();
-
                     waveNumber = 1;
                     enemyPerWave = 3;
                     enemySpawnedCount = 0;
                 }
+                else if (returnButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    gameState = GameState::Menu;
+                }
                 else if (exitButton.getGlobalBounds().contains(mousePos))
                 {
+                    clickSound.play();
                     window.close();
                 }
             }
         }
+
+        // ESC để quay lại Menu
+        if (event.type == sf::Event::KeyPressed)
+        {
+            if (gameState == GameState::MoreMenu && event.key.code == sf::Keyboard::Escape)
+            {
+                clickSound.play();
+                gameState = GameState::Menu;
+            }
+            else if (gameState == GameState::Tutorial && event.key.code == sf::Keyboard::Escape)
+            {
+                clickSound.play();
+                gameState = GameState::MoreMenu;
+            }
+            else if (gameState == GameState::Volume && event.key.code == sf::Keyboard::Escape)
+            {
+                clickSound.play();
+                gameState = GameState::MoreMenu;
+            }
+        }
     }
+
     if (isRunning)
     {
         player.handleInput();
@@ -185,19 +369,49 @@ void Game::processEvents()
 
 void Game::update(float dt)
 {
-    if (gameState == GameState::Menu || gameState == GameState::GameOver)
+    if (gameState == GameState::Menu || gameState == GameState::GameOver || gameState == GameState::MoreMenu)
     {
         sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
-        if (gameState == GameState::Menu)
-        {
-            playButton.setFillColor(playButton.getGlobalBounds().contains(mousePos) ? sf::Color::Yellow : sf::Color::White);
-            quitButton.setFillColor(quitButton.getGlobalBounds().contains(mousePos) ? sf::Color::Yellow : sf::Color::White);
+        auto updateButtonHover = [&](sf::Text& button, sf::RectangleShape& box) {
+            if (button.getGlobalBounds().contains(mousePos)) {
+                button.setFillColor(sf::Color::Yellow);
+                button.setScale(1.3f, 1.3f);
+            }
+            else {
+                button.setFillColor(sf::Color::White);
+                button.setScale(1.f, 1.f);
+            }
+
+            // Cập nhật kích thước và vị trí hộp bao
+            box.setSize(sf::Vector2f(button.getGlobalBounds().width + 40.f, button.getGlobalBounds().height + 30.f));
+            box.setPosition(button.getPosition().x - 20.f, button.getPosition().y - 15.f);
+            };
+
+        if (gameState == GameState::Menu) {
+            updateButtonHover(playButton, playButtonBox);
+            updateButtonHover(quitButton, quitButtonBox);
+            updateButtonHover(moreButton, moreButtonBox);
         }
-        else if (gameState == GameState::GameOver)
-        {
-            retryButton.setFillColor(retryButton.getGlobalBounds().contains(mousePos) ? sf::Color::Yellow : sf::Color::White);
-            exitButton.setFillColor(exitButton.getGlobalBounds().contains(mousePos) ? sf::Color::Yellow : sf::Color::White);
+        else if (gameState == GameState::GameOver) {
+            updateButtonHover(retryButton, retryButtonBox);
+            updateButtonHover(exitButton, exitButtonBox);
+            updateButtonHover(returnButton, returnButtonBox);
+            if (score > highScore) {
+                highScore = score;
+                saveHighScore();
+            }
+        }
+        else if (gameState == GameState::MoreMenu) {
+            updateButtonHover(tutorialButton, tutorialButtonBox);
+            updateButtonHover(volumeButton, volumeButtonBox);
+            updateButtonHover(highScoreButton, highScoreButtonBox);
+            updateButtonHover(backButton, backButtonBox);
+        }
+        else if (gameState == GameState::Volume) {
+            updateButtonHover(backButton, backButtonBox);
+            updateButtonHover(sfxText, sfxButton);
+            updateButtonHover(backButton, backButtonBox);
         }
 
         return;
@@ -208,7 +422,6 @@ void Game::update(float dt)
 
     waveText.setString("Wave: " + std::to_string(waveNumber));
 
-    // Spawn enemy mỗi 3 giây
     player.update(dt);
 
     if (enemySpawnClock.getElapsedTime().asSeconds() > 3.f)
@@ -217,68 +430,60 @@ void Game::update(float dt)
         enemySpawnClock.restart();
     }
 
-    for (auto &enemy : enemies)
+    for (auto& enemy : enemies)
         enemy.update(dt);
 
-    for (auto &bullet : bullets)
+    for (auto& bullet : bullets)
         bullet.update(dt);
 
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
-                                 [this](const Bullet &b)
-                                 {
-                                     return b.isOffScreen(window);
-                                 }),
-                  bullets.end());
-
-    // Xử lý va chạm đạn <-> enemy
-auto& playerBullets = player.getBullets();
-for (auto b = playerBullets.begin(); b != playerBullets.end(); )
-{
-    bool bulletErased = false;
-    for (auto& enemy : enemies)
-    {
-        if (enemy.isHit(b->getBounds()))
+        [this](const Bullet& b)
         {
-            b = playerBullets.erase(b);
-            explosionSound.play();
-            enemy.markToRemove();
-            bulletErased = true;
-            score += 100;
-            scoreText.setString("Score: " + std::to_string(score));
-            break;
-        }
-    }
-    if (!bulletErased)
-        ++b;
-}
+            return b.isOffScreen(window);
+        }),
+        bullets.end());
 
-    // Xóa enemy đã chết
-    enemies.erase(
-        std::remove_if(enemies.begin(), enemies.end(),
-                       [](const Enemy &e)
-                       { return e.shouldBeRemoved(); }),
+    auto& playerBullets = player.getBullets();
+    for (auto b = playerBullets.begin(); b != playerBullets.end(); )
+    {
+        bool bulletErased = false;
+        for (auto& enemy : enemies)
+        {
+            if (enemy.isHit(b->getBounds()))
+            {
+                b = playerBullets.erase(b);
+                explosionSound.play();
+                enemy.markToRemove();
+                bulletErased = true;
+                score += 100;
+                scoreText.setString("Score: " + std::to_string(score));
+                break;
+            }
+        }
+        if (!bulletErased)
+            ++b;
+    }
+
+    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+        [](const Enemy& e)
+        { return e.shouldBeRemoved(); }),
         enemies.end());
 
-    // Nếu đã spawn đủ enemy và hiện tại đã clear hết -> tăng wave mới
     if (enemies.empty() && enemySpawnedCount >= enemyPerWave)
     {
         waveNumber++;
         enemyPerWave += 2;
         enemySpawnedCount = 0;
         waveText.setString("Wave: " + std::to_string(waveNumber));
-
-        player.setPosition(sf::Vector2f(100.f, 100.f)); // Reset vị trí player
+        player.setPosition(sf::Vector2f(100.f, 100.f));
     }
 
-    // Va chạm enemy với player
-
     sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
-    for (auto &enemy : enemies)
+    for (auto& enemy : enemies)
     {
         if (enemy.isHit(playerBounds))
         {
             player.takeDamage(20);
-
             if (player.getHP() <= 0)
             {
                 isRunning = false;
@@ -291,64 +496,121 @@ for (auto b = playerBullets.begin(); b != playerBullets.end(); )
                     highScoreText.setString("High Score: " + std::to_string(highScore));
                 }
             }
-
             break;
         }
     }
 }
 
+
+
 void Game::render()
 {
     window.clear();
+
+    sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+
+    auto handleHover = [&](sf::Text& text, sf::RectangleShape& box) {
+        if (text.getGlobalBounds().contains(mousePos)) {
+            text.setFillColor(sf::Color::Yellow);
+            text.setScale(1.5f, 1.5f);
+        }
+        else {
+            text.setFillColor(sf::Color::White);
+            text.setScale(1.3f, 1.3f);
+        }
+        // Cập nhật lại vị trí box theo scale mới
+        box.setSize(sf::Vector2f(text.getGlobalBounds().width + 40.f, text.getGlobalBounds().height + 30.f));
+        box.setPosition(text.getPosition().x - 20.f, text.getPosition().y - 15.f);
+        };
 
     if (gameState == GameState::Menu)
     {
         window.draw(menuBackgroundSprite);
 
-        playButton.setFillColor(sf::Color::Black);
-        quitButton.setFillColor(sf::Color::Black);
+        // Hover và vẽ các nút chính
+        handleHover(playButton, playButtonBox);
+        handleHover(quitButton, quitButtonBox);
+        handleHover(moreButton, moreButtonBox);
 
-        // Lấy vị trí chuột
-        sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-
-        // Hover màu vàng
-        if (playButton.getGlobalBounds().contains(mousePos))
-            playButton.setFillColor(sf::Color::Yellow);
-        if (quitButton.getGlobalBounds().contains(mousePos))
-            quitButton.setFillColor(sf::Color::Yellow);
-
-        // Vẽ nút
+        window.draw(playButtonBox);
+        window.draw(quitButtonBox);
+        window.draw(moreButtonBox);
         window.draw(playButton);
         window.draw(quitButton);
+        window.draw(moreButton);
     }
-    else
+
+    else if (gameState == GameState::MoreMenu)
+    {
+        window.draw(menuBackgroundSprite);
+
+        // Hover và vẽ các nút phụ
+        handleHover(tutorialButton, tutorialButtonBox);
+        handleHover(volumeButton, volumeButtonBox);
+        handleHover(highScoreButton, highScoreButtonBox);
+
+        window.draw(tutorialButtonBox);
+        window.draw(volumeButtonBox);
+        window.draw(highScoreButtonBox);
+        window.draw(tutorialButton);
+        window.draw(volumeButton);
+        window.draw(highScoreButton);
+        if (showHighScoreText) {
+            highScoreText.setString("Highest Score: " + std::to_string(highScore));
+            window.draw(highScoreText);
+        }
+    }
+    else if (gameState == GameState::Playing)
     {
         window.draw(backgroundSprite);
-
-        if (gameState == GameState::Playing)
-        {
-            player.draw(window);
-            /* for (const auto &bullet : bullets)
-                 bullet.draw(window);*/
-            for (const auto &bullet : player.getBullets())
-                bullet.draw(window);
-            for (const auto &enemy : enemies)
-                enemy.draw(window);
-            window.draw(scoreText);
-            window.draw(waveText);
-            window.draw(highScoreText);
-            if (!isRunning)
-                window.draw(gameOverText);
-        }
-        else if (gameState == GameState::GameOver)
-        {
+        player.draw(window);
+        for (const auto& bullet : player.getBullets())
+            bullet.draw(window);
+        for (const auto& enemy : enemies)
+            enemy.draw(window);
+        window.draw(scoreText);
+        window.draw(waveText);
+        window.draw(highScoreText);
+        if (!isRunning)
             window.draw(gameOverText);
-            window.draw(scoreText);
-            window.draw(retryButton);
-            window.draw(exitButton);
-        }
     }
+    else if (gameState == GameState::GameOver)
+    {
+        window.draw(menuBackgroundSprite);
 
+        window.draw(gameOverText);
+        window.draw(scoreText);
+
+        handleHover(retryButton, retryButtonBox);
+        handleHover(exitButton, exitButtonBox);
+
+        window.draw(retryButtonBox);
+        window.draw(exitButtonBox);
+        window.draw(retryButton);
+        window.draw(exitButton);
+        window.draw(returnButtonBox);
+        window.draw(returnButton);
+    }
+    else if (gameState == GameState::Tutorial)
+    {
+        window.draw(menuBackgroundSprite);
+        window.draw(tutorialBox);
+        window.draw(tutorialText);
+        // Vẽ các phím
+        window.draw(wasdSprite);
+        window.draw(spaceSprite);
+        window.draw(escSprite);
+    }
+    else if (gameState == GameState::Volume)
+    {
+        window.draw(menuBackgroundSprite);
+
+        window.draw(musicButton);
+        window.draw(musicText);
+        window.draw(sfxButton);
+        window.draw(sfxText);
+
+    }
     window.display();
 }
 
@@ -367,19 +629,23 @@ void Game::spawnEnemy()
     enemySpawnedCount++;
 }
 
-void Game::loadHighScore()
-{
-    std::ifstream file("highscore.txt");
-    if (file.is_open())
-    {
-        file >> highScore;
-        file.close();
+void Game::loadHighScore() {
+    std::ifstream input("highscore.txt");
+    if (input.is_open()) {
+        int loadedScore;
+        if (input >> loadedScore && loadedScore >= 0 && loadedScore < 1000000) {
+            highScore = loadedScore;
+        }
+        else {
+            highScore = 0;
+        }
+        input.close();
     }
-    else
-    {
+    else {
         highScore = 0;
     }
 }
+
 
 void Game::saveHighScore()
 {

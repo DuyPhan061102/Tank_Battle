@@ -14,7 +14,10 @@ enum class GameState
 {
     Menu,
     Playing,
-    GameOver
+    GameOver,
+    MoreMenu,
+    Tutorial,
+    Volume,
 };
 
 class Game
@@ -24,7 +27,7 @@ private:
     int enemyPerWave = 3;
     int enemySpawnedCount = 0;
     sf::RenderWindow window;
-    sf::Clock clock;
+    sf::Clock clock; 
     sf::Clock enemySpawnClock;
 
     GameState gameState;     // trạng thái hiện tại của game
@@ -53,6 +56,44 @@ private:
     sf::Text quitButton;
     sf::Text retryButton;
     sf::Text exitButton;
+    sf::Text moreButton;
+    sf::Text tutorialButton;
+    sf::Text volumeButton;
+    sf::Text highScoreButton;
+    sf::Text backButton;
+
+    // Ô cho các nút menu
+    sf::RectangleShape playButtonBox;
+    sf::RectangleShape quitButtonBox;
+    sf::RectangleShape retryButtonBox;
+    sf::RectangleShape exitButtonBox;
+    sf::RectangleShape moreButtonBox;
+    sf::RectangleShape tutorialButtonBox;
+    sf::RectangleShape volumeButtonBox;
+    sf::RectangleShape highScoreButtonBox;
+    sf::RectangleShape backButtonBox;
+    sf::Text highScoreMenuText;
+
+    // Menu tutorial
+    sf::RectangleShape tutorialBox;
+    sf::Text tutorialText;
+    sf::Sprite wasdSprite, spaceSprite, escSprite;
+    sf::Texture wasdTexture, spaceTexture, escTexture;
+    sf::Text wasdText, spaceText, escText;
+
+    // Volume menu
+    sf::RectangleShape musicButton;
+    sf::Text musicText;
+    sf::RectangleShape sfxButton;
+    sf::Text sfxText;
+
+    // Âm thanh cho nút
+    sf::SoundBuffer clickBuffer;
+    sf::Sound clickSound;
+
+    // Return to Menu
+    sf::Text returnButton;
+    sf::RectangleShape returnButtonBox;
 
     // Điểm số
     int score = 0;
@@ -63,9 +104,14 @@ private:
     sf::Sound shootSound;
     sf::Sound explosionSound;
 
+    // Bật tắt nhạc
+    bool isMusicOn = true;
+    bool isSFXOn = true;
+
     // Điểm cao nhất
     int highScore = 0;
     sf::Text highScoreText;
+    bool showHighScoreText = false;
 
     void loadHighScore(); // đọc từ file
     void saveHighScore(); // ghi vào file
