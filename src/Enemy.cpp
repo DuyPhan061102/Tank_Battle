@@ -1,5 +1,6 @@
 #include "Enemy.h"
 #include <cstdlib>
+#include <cmath>
 
 Enemy::Enemy(float x, float y, int hpValue)
 {
