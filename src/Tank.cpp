@@ -22,3 +22,6 @@ void Tank::setPosition(const sf::Vector2f &pos)
 {
     body.setPosition(pos);
 }
+float Tank::getSpeed() const {
+    return speed;
+}

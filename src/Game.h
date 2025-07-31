@@ -9,6 +9,8 @@
 #include <cmath>
 #include <fstream> // để đọc/ghi file
 
+#include "Wall.h"
+
 // Trạng thái của game
 enum class GameState
 {
@@ -29,6 +31,11 @@ private:
 
     GameState gameState;     // trạng thái hiện tại của game
     bool isRunning;
+    // tường 
+    std::vector<Wall> walls;
+
+
+
 
     std::vector<Enemy> enemies;
     std::vector<Bullet> bullets;
@@ -66,6 +73,8 @@ private:
     // Điểm cao nhất
     int highScore = 0;
     sf::Text highScoreText;
+    // layout map
+    void createMaze();
 
     void loadHighScore(); // đọc từ file
     void saveHighScore(); // ghi vào file

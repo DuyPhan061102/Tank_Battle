@@ -72,27 +72,67 @@ void PlayerTank::draw(sf::RenderWindow& window) const
     for (const auto& b : bullets)
         b.draw(window);
 }
+
+//update move
+void PlayerTank::move(float dx, float dy)
+{
+    sf::FloatRect bodyBounds = body.getGlobalBounds();
+    sf::FloatRect futureBounds = bodyBounds;
+    futureBounds.left += dx;
+    futureBounds.top += dy;
+
+    bool collision = false;
+    if (wallsPtr) {
+        for (const Wall& wall : *wallsPtr) {
+            if (wall.getBounds().intersects(futureBounds)) {
+                collision = true;
+                break;
+            }
+        }
+    }
+
+    if (!collision)
+        body.move(dx, dy);
+}
 void PlayerTank::update(float deltaTime)
 {
     handleInput();
+
     move(movement.x * speed * deltaTime, movement.y * speed * deltaTime);
+
     updateHealthBar();
 
-    for (auto& b : bullets) {
-        b.update(deltaTime);
+    // 🔁 Luôn kiểm tra va chạm tường sau khi di chuyển
+    bool touchingWall = false;
+    if (wallsPtr) {
+        sf::FloatRect playerBounds = body.getGlobalBounds();
+        for (const Wall& wall : *wallsPtr) {
+            if (wall.getBounds().intersects(playerBounds)) {
+                touchingWall = true;
+                break;
+            }
+        }
     }
 
-    
+    // 🔁 Nếu vẫn đang chạm tường -> trừ máu mỗi 0.5s
+    if (touchingWall) {
+        if (wallDamageClock.getElapsedTime().asSeconds() >= wallDamageCooldown) {
+            takeDamage(maxHealth * 0.15f);
+            wallDamageClock.restart();
+        }
+    }
+
+    for (auto& b : bullets)
+        b.update(deltaTime);
+
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
         [](const Bullet& b) {
             sf::Vector2f pos = b.getPosition();
             return pos.x < 0 || pos.x > 800 || pos.y < 0 || pos.y > 600;
         }), bullets.end());
 }
-void PlayerTank::move(float dx, float dy)
-{
-    body.move(dx, dy);
-}
+
+
 
 sf::Sound* shootSoundPtr = nullptr;
 
@@ -155,3 +195,14 @@ const std::vector<Bullet>& PlayerTank::getBullets() const {
 std::vector<Bullet>& PlayerTank::getBullets() {
     return bullets;
 }
+void PlayerTank::setWalls(std::vector<Wall>* walls) {
+    wallsPtr = walls;
+}
+sf::Clock& PlayerTank::getWallDamageClock() {
+    return wallDamageClock;
+}
+
+float PlayerTank::getWallDamageCooldown() const {
+    return wallDamageCooldown;
+}
+
