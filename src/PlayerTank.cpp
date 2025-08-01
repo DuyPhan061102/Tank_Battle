@@ -115,12 +115,6 @@ void PlayerTank::update(float deltaTime)
     }
 
     // 🔁 Nếu vẫn đang chạm tường -> trừ máu mỗi 0.5s
-    if (touchingWall) {
-        if (wallDamageClock.getElapsedTime().asSeconds() >= wallDamageCooldown) {
-            takeDamage(maxHealth * 0.15f);
-            wallDamageClock.restart();
-        }
-    }
 
     for (auto& b : bullets)
         b.update(deltaTime);
@@ -198,11 +192,3 @@ std::vector<Bullet>& PlayerTank::getBullets() {
 void PlayerTank::setWalls(std::vector<Wall>* walls) {
     wallsPtr = walls;
 }
-sf::Clock& PlayerTank::getWallDamageClock() {
-    return wallDamageClock;
-}
-
-float PlayerTank::getWallDamageCooldown() const {
-    return wallDamageCooldown;
-}
-

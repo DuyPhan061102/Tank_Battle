@@ -50,9 +50,4 @@ private:
     mutable sf::Clock damageClock;
     bool recentlyDamaged = false;
     sf::Vector2f lastPosition;
-    bool wasTouchingWall = false;  // để theo dõi trạng thái va chạm trước đó
-    sf::Clock wallDamageClock;
-    float wallDamageCooldown = 0.5f; // 0.5 giây giữa 2 lần mất máu
-
-
 };

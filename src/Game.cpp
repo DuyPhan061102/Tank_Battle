@@ -7,6 +7,8 @@
 Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), gameState(GameState::Menu), isRunning(true) 
 {
     createMaze();
+    player.setPosition(playerSpawnPosition);
+
     player.setWalls(&walls);
 
     window.setFramerateLimit(60);
@@ -173,11 +175,11 @@ void Game::processEvents()
     enemySpawnedCount = 0;
 
     // 👉 Thêm các dòng sau:
-    player = PlayerTank();
-    player.setWalls(&walls);
-    player.setWindow(&window);
-    player.setShootSound(&shootSound);
-    player.setPosition(sf::Vector2f(100.f, 100.f));
+player = PlayerTank();
+player.setWalls(&walls);
+player.setWindow(&window);
+player.setShootSound(&shootSound);
+player.setPosition(playerSpawnPosition);  // ✅ dùng spawnPoint từ map
                  }
 
                 else if (exitButton.getGlobalBounds().contains(mousePos))
@@ -307,7 +309,7 @@ for (auto b = playerBullets.begin(); b != playerBullets.end(); )
         enemySpawnedCount = 0;
         waveText.setString("Wave: " + std::to_string(waveNumber));
 
-        player.setPosition(sf::Vector2f(100.f, 100.f)); // Reset vị trí player
+        player.setPosition(playerSpawnPosition);// Spawn theo s
     }
 
     // Va chạm enemy với player
@@ -315,8 +317,8 @@ for (auto b = playerBullets.begin(); b != playerBullets.end(); )
     for (auto &enemy : enemies)
     {
         if (enemy.isHit(playerBounds))
+        player.takeDamage(50);
         {
-            player.takeDamage(20);
 
             if (player.getHP() <= 0)
             {
@@ -396,18 +398,31 @@ void Game::render()
 
 void Game::spawnEnemy()
 {
-    if (enemySpawnedCount >= enemyPerWave)
+    if (enemySpawnedCount >= enemyPerWave || enemySpawnPoints.empty())
         return;
 
-    float x = static_cast<float>(rand() % 700 + 50);
-    float y = static_cast<float>(rand() % 500 + 50);
+    // Lọc các vị trí còn spawn được
+    std::vector<int> availableIndexes;
+    for (int i = 0; i < enemySpawnCounts.size(); ++i) {
+        if (enemySpawnCounts[i] < maxEnemiesPerSpawn)
+            availableIndexes.push_back(i);
+    }
 
-    Enemy e(x, y);
-    e.setSpeed(50.f * std::pow(1.35f, waveNumber)); // tăng 35% mỗi wave
+    if (availableIndexes.empty()) return; // Không còn chỗ spawn
+
+    // Chọn ngẫu nhiên từ các vị trí còn trống
+    int chosen = availableIndexes[rand() % availableIndexes.size()];
+    sf::Vector2f spawnPos = enemySpawnPoints[chosen];
+
+    Enemy e(spawnPos.x, spawnPos.y);
+    e.setSpeed(50.f * std::pow(1.35f, waveNumber));
 
     enemies.push_back(e);
+    enemySpawnCounts[chosen]++; // tăng số enemy ở vị trí này
     enemySpawnedCount++;
 }
+
+
 
 void Game::loadHighScore()
 {
@@ -436,7 +451,6 @@ void Game::createMaze() {
     walls.clear();
 
     std::ifstream file("assets/Maps/maze.txt");
-
     if (!file.is_open()) {
         std::cout << "❌ Không thể mở file maze.txt\n";
         return;
@@ -444,21 +458,46 @@ void Game::createMaze() {
 
     std::string line;
     int row = 0;
-    const float tileSize = 40.f; // mỗi ô trong mê cung có kích thước 40x40
+    const float tileSize = 40.f;
+    const float wallSize = 30.f;
 
     while (std::getline(file, line)) {
         for (int col = 0; col < line.length(); ++col) {
-            if (line[col] == '#') {
-                sf::Vector2f pos(col * tileSize, row * tileSize);
-                sf::Vector2f size(tileSize, tileSize);
+            char ch = line[col];
+            if (ch == '#') {
+                // Vẽ tường
+                sf::Vector2f pos(
+                    col * tileSize + (tileSize - wallSize) / 2.f,
+                    row * tileSize + (tileSize - wallSize) / 2.f
+                );
+                sf::Vector2f size(wallSize, wallSize);
                 walls.emplace_back(pos, size);
             }
+            else if (ch == 'S') {
+                // Lưu vị trí spawn (đặt ở giữa tile)
+                playerSpawnPosition = sf::Vector2f(
+                    col * tileSize + tileSize / 2.f,
+                    row * tileSize + tileSize / 2.f
+                );
+            }
+else if (ch == 'E') {
+    sf::Vector2f spawnPos(
+        col * tileSize + tileSize / 2.f,
+        row * tileSize + tileSize / 2.f
+    );
+    enemySpawnPoints.push_back(spawnPos);
+    enemySpawnCounts.push_back(0); // khởi tạo số lượng đã spawn tại đây là 0
+}
+
+
         }
         row++;
     }
 
     file.close();
 }
+
+
 
 
 

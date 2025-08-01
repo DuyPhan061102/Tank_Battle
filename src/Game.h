@@ -75,11 +75,17 @@ private:
     sf::Text highScoreText;
     // layout map
     void createMaze();
+    sf::Vector2f playerSpawnPosition = sf::Vector2f(100.f, 100.f); // tank spawn theo S
+    std::vector<sf::Vector2f> enemySpawnPoints; // Enemy spawn
+    const int maxEnemiesPerSpawn = 2;  // mỗi vị trí tối đa 2 enemy
+
+
 
     void loadHighScore(); // đọc từ file
     void saveHighScore(); // ghi vào file
 
     sf::Music backgroundMusic; // cài nhạc nền
+
 
 
 public:
