@@ -77,6 +77,8 @@ private:
     void createMaze();
     sf::Vector2f playerSpawnPosition = sf::Vector2f(100.f, 100.f); // tank spawn theo S
     std::vector<sf::Vector2f> enemySpawnPoints; // Enemy spawn
+    std::vector<int> enemySpawnCounts;  // Mỗi điểm spawn có tối đa 2 enemy
+
     const int maxEnemiesPerSpawn = 2;  // mỗi vị trí tối đa 2 enemy
 
 

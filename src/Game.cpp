@@ -180,6 +180,7 @@ player.setWalls(&walls);
 player.setWindow(&window);
 player.setShootSound(&shootSound);
 player.setPosition(playerSpawnPosition);  // ✅ dùng spawnPoint từ map
+createMaze();
                  }
 
                 else if (exitButton.getGlobalBounds().contains(mousePos))
@@ -222,6 +223,12 @@ void Game::update(float dt)
 
     // Spawn enemy mỗi 3 giây
     player.update(dt);
+    //Xóa tường
+     walls.erase(
+    std::remove_if(walls.begin(), walls.end(),
+                   [](const Wall& w) { return w.isDestroyed(); }),
+    walls.end());
+
 
 // Kiểm tra máu sau khi cập nhật
 if (player.getHP() <= 0 && gameState == GameState::Playing) {
@@ -310,6 +317,7 @@ for (auto b = playerBullets.begin(); b != playerBullets.end(); )
         waveText.setString("Wave: " + std::to_string(waveNumber));
 
         player.setPosition(playerSpawnPosition);// Spawn theo s
+        createMaze();
     }
 
     // Va chạm enemy với player
@@ -448,56 +456,57 @@ void Game::saveHighScore()
     }
 }
 void Game::createMaze() {
-    walls.clear();
-
-    std::ifstream file("assets/Maps/maze.txt");
+    std::ifstream file("/Users/macos/Desktop/Tank_Battle/assets/Maps/maze.txt");
     if (!file.is_open()) {
-        std::cout << "❌ Không thể mở file maze.txt\n";
+        std::cerr << "❌ Không thể mở maze.txt\n";
         return;
     }
 
+    walls.clear();
+    enemySpawnPoints.clear();
+    enemySpawnCounts.clear();
+
     std::string line;
     int row = 0;
-    const float tileSize = 40.f;
-    const float wallSize = 30.f;
+    const int tileSize = 40;
+
+    // 🔸 Làm tường nhỏ hơn tileSize
+    const float wallSizeRatio = 0.75f; // 👈 Giảm kích thước (có thể điều chỉnh: 0.5f, 0.7f,...)
+    const sf::Vector2f wallSize(tileSize * wallSizeRatio, tileSize * wallSizeRatio);
+    const sf::Vector2f wallOffset((tileSize - wallSize.x) / 2.f, (tileSize - wallSize.y) / 2.f);
 
     while (std::getline(file, line)) {
-        for (int col = 0; col < line.length(); ++col) {
+        for (int col = 0; col < line.size(); ++col) {
             char ch = line[col];
-            if (ch == '#') {
-                // Vẽ tường
-                sf::Vector2f pos(
-                    col * tileSize + (tileSize - wallSize) / 2.f,
-                    row * tileSize + (tileSize - wallSize) / 2.f
-                );
-                sf::Vector2f size(wallSize, wallSize);
-                walls.emplace_back(pos, size);
-            }
-            else if (ch == 'S') {
-                // Lưu vị trí spawn (đặt ở giữa tile)
-                playerSpawnPosition = sf::Vector2f(
-                    col * tileSize + tileSize / 2.f,
-                    row * tileSize + tileSize / 2.f
-                );
-            }
-else if (ch == 'E') {
-    sf::Vector2f spawnPos(
-        col * tileSize + tileSize / 2.f,
-        row * tileSize + tileSize / 2.f
-    );
-    enemySpawnPoints.push_back(spawnPos);
-    enemySpawnCounts.push_back(0); // khởi tạo số lượng đã spawn tại đây là 0
-}
+            sf::Vector2f pos(col * tileSize, row * tileSize);
 
-
+            switch (ch) {
+                case '#':
+                    walls.emplace_back(pos + wallOffset, wallSize, 10);
+                    break;
+                case '@':
+                    walls.emplace_back(pos + wallOffset, wallSize, 20);
+                    break;
+                case 'S':
+                    playerSpawnPosition = pos;
+                    break;
+                case 'E':
+                    if (enemySpawnPoints.size() < 5) {
+                        enemySpawnPoints.push_back(pos);
+                        enemySpawnCounts.push_back(0);
+                    }
+                    break;
+                case '.':
+                    break;
+                default:
+                    break;
+            }
         }
         row++;
     }
 
     file.close();
+
+    player.setWalls(&walls);
+    player.setPosition(playerSpawnPosition);
 }
-
-
-
-
-

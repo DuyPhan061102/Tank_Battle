@@ -10,7 +10,8 @@ Bullet::Bullet(const sf::Vector2f &startPos, const sf::Vector2f &dir, float spd)
 
 void Bullet::update(float dt)
 {
-	shape.move(direction * speed * dt);
+	sf::Vector2f movement = direction * speed * dt;
+	shape.move(movement); // đơn giản chỉ di chuyển đạn
 }
 
 void Bullet::draw(sf::RenderWindow &window) const

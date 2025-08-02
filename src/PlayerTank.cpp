@@ -98,33 +98,53 @@ void PlayerTank::update(float deltaTime)
 {
     handleInput();
 
+    // Di chuyển theo input
     move(movement.x * speed * deltaTime, movement.y * speed * deltaTime);
 
+    // Cập nhật thanh máu
     updateHealthBar();
 
-    // 🔁 Luôn kiểm tra va chạm tường sau khi di chuyển
-    bool touchingWall = false;
-    if (wallsPtr) {
-        sf::FloatRect playerBounds = body.getGlobalBounds();
-        for (const Wall& wall : *wallsPtr) {
-            if (wall.getBounds().intersects(playerBounds)) {
-                touchingWall = true;
-                break;
-            }
-        }
-    }
-
-    // 🔁 Nếu vẫn đang chạm tường -> trừ máu mỗi 0.5s
-
+    // Cập nhật vị trí đạn
     for (auto& b : bullets)
         b.update(deltaTime);
 
+    // Xử lý va chạm đạn <-> tường
+    for (auto it = bullets.begin(); it != bullets.end(); ) {
+        bool hitWall = false;
+
+        if (wallsPtr) {
+            for (Wall& wall : *wallsPtr) {
+                if (wall.getBounds().intersects(it->getBounds())) {
+                    wall.takeDamage();  // Tăng hitCount
+                    hitWall = true;
+                    break;
+                }
+            }
+        }
+
+        if (hitWall) {
+            it = bullets.erase(it);  // Xóa đạn sau khi bắn tường
+        } else {
+            ++it;
+        }
+    }
+
+    // Xóa đạn nếu ra khỏi màn hình
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
         [](const Bullet& b) {
             sf::Vector2f pos = b.getPosition();
             return pos.x < 0 || pos.x > 800 || pos.y < 0 || pos.y > 600;
         }), bullets.end());
+
+    // Xoá tường đã bị phá (hitCount >= 3)
+    if (wallsPtr) {
+        wallsPtr->erase(
+            std::remove_if(wallsPtr->begin(), wallsPtr->end(),
+                           [](const Wall& wall) { return wall.isDestroyed(); }),
+            wallsPtr->end());
+    }
 }
+
 
 
 
