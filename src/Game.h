@@ -33,7 +33,9 @@ private:
     bool isRunning;
     // tường 
     std::vector<Wall> walls;
-
+    // ảnh tường
+    sf::Texture wallTexture;
+    sf::Texture strongWallTexture;
 
 
 

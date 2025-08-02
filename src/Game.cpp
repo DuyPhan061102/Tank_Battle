@@ -40,6 +40,13 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), gameState(GameSta
     if (!font.loadFromFile("assets/Fonts/arial.ttf"))
         std::cout << "❌ Không thể tải font arial.ttf\n";
 
+    if (!wallTexture.loadFromFile("assets/Images/wall.png"))
+        std::cout << "❌ Không thể tải wall.png\n";
+
+    if (!strongWallTexture.loadFromFile("assets/Images/strong_wall.png"))
+        std::cout << "❌ Không thể tải strong_wall.png\n";
+
+
     scoreText.setFont(font);
     scoreText.setCharacterSize(24);
     scoreText.setFillColor(sf::Color::White);
@@ -480,13 +487,20 @@ void Game::createMaze() {
             char ch = line[col];
             sf::Vector2f pos(col * tileSize, row * tileSize);
 
-            switch (ch) {
-                case '#':
-                    walls.emplace_back(pos + wallOffset, wallSize, 10);
-                    break;
-                case '@':
-                    walls.emplace_back(pos + wallOffset, wallSize, 20);
-                    break;
+switch (ch) {
+    case '#': {
+        Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 10);
+        w.setTexture(&wallTexture);  // Gán ảnh cho tường thường
+        walls.push_back(w);
+        break;
+    }
+    case '@': {
+        Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 20);
+        w.setTexture(&strongWallTexture); // Gán ảnh cho tường bền
+        walls.push_back(w);
+        break;
+    }
+
                 case 'S':
                     playerSpawnPosition = pos;
                     break;
