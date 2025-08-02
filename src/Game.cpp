@@ -495,7 +495,7 @@ switch (ch) {
         break;
     }
     case '@': {
-        Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 20);
+        Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 9999);
         w.setTexture(&strongWallTexture); // Gán ảnh cho tường bền
         walls.push_back(w);
         break;
