@@ -20,6 +20,10 @@ public:
     void setSpeed(float newSpeed); 
     void takeDamage(int amount);
     void chasePlayer(const sf::Vector2f& playerPos, float dt);
+    virtual bool isBoss() const { return false; }
+    int getMaxHP() const;
+    void heal(float ratio);
+
     
 
 private:

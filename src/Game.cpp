@@ -238,6 +238,7 @@ void Game::update(float dt)
 
     // Xử lý va chạm đạn <-> enemy
 auto& playerBullets = player.getBullets();
+std::vector<Enemy*> enemiesToHeal;
 for (auto b = playerBullets.begin(); b != playerBullets.end(); )
 {
     bool bulletErased = false;
@@ -247,19 +248,34 @@ for (auto b = playerBullets.begin(); b != playerBullets.end(); )
         {
             b = playerBullets.erase(b);
             explosionSound.play();
+            bulletErased = true;
+
 
             // ✅ KHÔNG cần markToRemove ở đây
             if (enemy->shouldBeRemoved()) {
+                enemiesToHeal.push_back(enemy.get());
                 score += 100;
                 scoreText.setString("Score: " + std::to_string(score));
-            }
 
-            bulletErased = true;
+            }
             break;
         }
     }
     if (!bulletErased)
         ++b;
+}
+for (auto& deadEnemy : enemiesToHeal) {
+    for (auto& other : enemies) {
+        if (other.get() != deadEnemy) {
+            float ratio = 0.f;
+
+            if (other->isBoss())                 ratio = 0.3f;
+            else if (other->getMaxHP() > 100)    ratio = 0.2f;
+            else                                 ratio = 0.5f;
+
+            other->heal(ratio);
+        }
+    }
 }
 
 
