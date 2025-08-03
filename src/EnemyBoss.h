@@ -9,4 +9,6 @@ public:
     EnemyBoss(float x, float y);
     void update(float deltaTime) override;
     bool isHit(const sf::FloatRect& bounds) override;
+    bool isBoss() const override { return true; }
+
 };

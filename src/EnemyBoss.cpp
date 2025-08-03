@@ -1,9 +1,9 @@
 #include "EnemyBoss.h"
 #include <SFML/Graphics.hpp>
 
-EnemyBoss::EnemyBoss(float x, float y) : Enemy(x, y, 50)
+EnemyBoss::EnemyBoss(float x, float y) : Enemy(x, y, 30)
 {
-    body.setSize(sf::Vector2f(80.f, 80.f));
+    body.setSize(sf::Vector2f(60.f, 60.f));
     body.setFillColor(sf::Color::Red);
     body.setPosition(x, y);
 }

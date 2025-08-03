@@ -1,7 +1,7 @@
 #include "EnemyTank.h"
 #include <cmath>
 
-EnemyTank::EnemyTank(float x, float y) : Enemy(x, y, 3) {
+EnemyTank::EnemyTank(float x, float y) : Enemy(x, y, 8) {
     body.setFillColor(sf::Color(100, 100, 255));
 }
 

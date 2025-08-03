@@ -129,3 +129,14 @@ void Enemy::chasePlayer(const sf::Vector2f& playerPos, float dt)
 
     body.move(dir * speed * dt);
 }
+
+int Enemy::getMaxHP() const {
+    return maxHp;
+}
+
+void Enemy::heal(float ratio) {
+    int amount = static_cast<int>(maxHp * ratio);
+    hp += amount;
+    if (hp > maxHp) hp = maxHp;
+}
+
