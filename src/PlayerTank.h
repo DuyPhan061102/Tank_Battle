@@ -26,7 +26,7 @@ public:
     const std::vector<Bullet>& getBullets() const;
     std::vector<Bullet>& getBullets();
     void setShootSound(sf::Sound* sound);
-
+    void reset();
 
 private:
     sf::Vector2f movement;

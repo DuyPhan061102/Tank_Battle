@@ -27,7 +27,7 @@ private:
     int enemyPerWave = 3;
     int enemySpawnedCount = 0;
     sf::RenderWindow window;
-    sf::Clock clock; 
+    sf::Clock clock;
     sf::Clock enemySpawnClock;
 
     GameState gameState;     // trạng thái hiện tại của game
@@ -50,6 +50,9 @@ private:
     sf::Text scoreText;
     sf::Text gameOverText;
     sf::Text waveText;
+    sf::Text highScoreText;
+    sf::Text highScoreMenuText;
+    sf::Text gameTitle;
 
     // Các nút menu và game over
     sf::Text playButton;
@@ -61,6 +64,7 @@ private:
     sf::Text volumeButton;
     sf::Text highScoreButton;
     sf::Text backButton;
+    sf::Text returnButton;
 
     // Ô cho các nút menu
     sf::RectangleShape playButtonBox;
@@ -72,14 +76,13 @@ private:
     sf::RectangleShape volumeButtonBox;
     sf::RectangleShape highScoreButtonBox;
     sf::RectangleShape backButtonBox;
-    sf::Text highScoreMenuText;
+    sf::RectangleShape returnButtonBox;
 
     // Menu tutorial
     sf::RectangleShape tutorialBox;
     sf::Text tutorialText;
     sf::Sprite wasdSprite, spaceSprite, escSprite;
     sf::Texture wasdTexture, spaceTexture, escTexture;
-    sf::Text wasdText, spaceText, escText;
 
     // Volume menu
     sf::RectangleShape musicButton;
@@ -91,13 +94,6 @@ private:
     sf::SoundBuffer clickBuffer;
     sf::Sound clickSound;
 
-    // Return to Menu
-    sf::Text returnButton;
-    sf::RectangleShape returnButtonBox;
-
-    // Điểm số
-    int score = 0;
-
     // Âm thanh
     sf::SoundBuffer shootBuffer;
     sf::SoundBuffer explosionBuffer;
@@ -108,16 +104,15 @@ private:
     bool isMusicOn = true;
     bool isSFXOn = true;
 
-    // Điểm cao nhất
+    // Điểm số
+    int score = 0;
     int highScore = 0;
-    sf::Text highScoreText;
     bool showHighScoreText = false;
-
-    void loadHighScore(); // đọc từ file
-    void saveHighScore(); // ghi vào file
 
     sf::Music backgroundMusic; // cài nhạc nền
 
+    void loadHighScore(); // đọc từ file
+    void saveHighScore(); // ghi vào file
 
 public:
     Game();
@@ -128,4 +123,13 @@ private:
     void update(float dt);
     void render();
     void spawnEnemy();
+
+    void loadAssets();
+    void setupBackgrounds();
+    void setupFontsAndText();
+    void setupTutorial();
+    void setupUIButtons();
+    void setupAudio();
+    void setupButtonText(sf::Text& text, const std::string& str, unsigned int charSize);
+    void updateMenuButtonHovers();
 };

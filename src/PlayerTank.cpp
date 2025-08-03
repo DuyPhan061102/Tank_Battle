@@ -155,3 +155,10 @@ const std::vector<Bullet>& PlayerTank::getBullets() const {
 std::vector<Bullet>& PlayerTank::getBullets() {
     return bullets;
 }
+
+void PlayerTank::reset() {
+    currentHealth = maxHealth;
+    bullets.clear();
+    body.setPosition(400.f, 500.f);
+    body.setRotation(0.f); 
+}

@@ -13,61 +13,73 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
     player.setWindow(&window);
     player.setShootSound(&shootSound);
 
+    loadAssets();
+    setupBackgrounds();
+    setupFontsAndText();
+    setupTutorial();
+    setupUIButtons();
+    setupAudio();
+}
+
+void Game::loadAssets() {
     if (!backgroundTexture.loadFromFile("assets/Images/background.jpg"))
         std::cout << "❌ Không thể tải background.jpg\n";
-    else {
-        backgroundSprite.setTexture(backgroundTexture);
-        backgroundSprite.setScale(
-            window.getSize().x / backgroundSprite.getLocalBounds().width,
-            window.getSize().y / backgroundSprite.getLocalBounds().height);
-    }
 
     if (!menuBackgroundTexture.loadFromFile("assets/Images/menu_background.jpg"))
         std::cout << "❌ Không thể tải menu_background.jpg\n";
-    else {
-        menuBackgroundSprite.setTexture(menuBackgroundTexture);
-        menuBackgroundSprite.setScale(
-            window.getSize().x / menuBackgroundSprite.getLocalBounds().width,
-            window.getSize().y / menuBackgroundSprite.getLocalBounds().height);
-    }
 
-    if (!font.loadFromFile("assets/Fonts/arial.ttf"))
-        std::cout << "❌ Không thể tải font arial.ttf\n";
+    if (!font.loadFromFile("assets/Fonts/Orbitron-Regular.ttf"))
+        std::cout << "❌ Không thể tải font Roboto-Regular.ttf\n";
 
-    // Load key textures
     if (!wasdTexture.loadFromFile("assets/Images/key_wasd.png"))
         std::cout << "Không thể tải ảnh WASD\n";
-    wasdSprite.setTexture(wasdTexture);
-    wasdSprite.setPosition(60.f, 300.f);  // Tuỳ chỉnh vị trí cho đẹp
-    wasdSprite.setScale(0.4f, 0.4f);       // Nếu ảnh to quá
 
     if (!spaceTexture.loadFromFile("assets/Images/key_space.png"))
         std::cout << "Không thể tải ảnh SPACE\n";
+
+    if (!escTexture.loadFromFile("assets/Images/key_esc.png"))
+        std::cout << "Không thể tải ảnh ESC\n";
+}
+
+void Game::setupBackgrounds() {
+    backgroundSprite.setTexture(backgroundTexture);
+    backgroundSprite.setScale(
+        window.getSize().x / backgroundSprite.getLocalBounds().width,
+        window.getSize().y / backgroundSprite.getLocalBounds().height);
+
+    menuBackgroundSprite.setTexture(menuBackgroundTexture);
+    menuBackgroundSprite.setScale(
+        window.getSize().x / menuBackgroundSprite.getLocalBounds().width,
+        window.getSize().y / menuBackgroundSprite.getLocalBounds().height);
+}
+
+void Game::setupTutorial() {
+    wasdSprite.setTexture(wasdTexture);
+    wasdSprite.setPosition(60.f, 300.f);
+    wasdSprite.setScale(0.4f, 0.4f);
+
     spaceSprite.setTexture(spaceTexture);
     spaceSprite.setPosition(250.f, 320.f);
     spaceSprite.setScale(0.3f, 0.3f);
 
-    if (!escTexture.loadFromFile("assets/Images/key_esc.png"))
-        std::cout << "Không thể tải ảnh ESC\n";
     escSprite.setTexture(escTexture);
     escSprite.setPosition(550.f, 320.f);
     escSprite.setScale(0.5f, 0.5f);
 
-
-    // Tutorial box
     tutorialBox.setSize(sf::Vector2f(700.f, 450.f));
     tutorialBox.setFillColor(sf::Color(100, 100, 100, 200));
     tutorialBox.setOutlineThickness(3.f);
     tutorialBox.setOutlineColor(sf::Color::Black);
     tutorialBox.setPosition(50.f, 75.f);
 
-    // Tutorial text
     tutorialText.setFont(font);
     tutorialText.setCharacterSize(22);
     tutorialText.setFillColor(sf::Color::White);
     tutorialText.setString("Instructions:\n\n- Use W / A / S / D to move the tank.\n- Press SPACE to shoot.\n- Press ESC to return in Menu.");
     tutorialText.setPosition(80.f, 100.f);
+}
 
+void Game::setupFontsAndText() {
     scoreText.setFont(font);
     scoreText.setCharacterSize(24);
     scoreText.setFillColor(sf::Color::White);
@@ -80,113 +92,87 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
     waveText.setPosition(10.f, 40.f);
     waveText.setString("Wave: 1");
 
+    gameTitle.setFont(font);
+    gameTitle.setString("TANK BATTLE");
+    gameTitle.setCharacterSize(64);
+    gameTitle.setFillColor(sf::Color::Red);
+
+    sf::FloatRect titleBounds = gameTitle.getLocalBounds();
+    gameTitle.setOrigin(titleBounds.left + titleBounds.width / 2.f, titleBounds.top + titleBounds.height / 2.f);
+    gameTitle.setPosition(window.getSize().x / 2.f, 70.f);
+
     gameOverText.setFont(font);
     gameOverText.setString("GAME OVER");
     gameOverText.setCharacterSize(48);
     gameOverText.setFillColor(sf::Color::Red);
-    gameOverText.setPosition(250.f, 150.f);
+    gameOverText.setPosition(230.f, 90.f);
 
-    float centerX = window.getSize().x / 2.f;
-
-    auto setupButton = [&](sf::Text& text, const std::string& str, float y) {
-        text.setFont(font);
-        text.setString(str);
-        text.setCharacterSize(36);
-        text.setFillColor(sf::Color::White);
-        text.setScale(1.3f, 1.3f);
-        float width = text.getGlobalBounds().width * 1.3f;
-        float height = text.getGlobalBounds().height * 1.3f;
-        text.setPosition(centerX - width / 2.f, y);
-        };
-
-    setupButton(playButton, "Play", 250.f);
-    setupButton(quitButton, "Quit", 330.f);
-    setupButton(moreButton, "More", 410.f);
-    setupButton(retryButton, "Retry", 250.f);
-    setupButton(exitButton, "Exit", 330.f);
-    setupButton(tutorialButton, "Tutorial", 200.f);
-    setupButton(volumeButton, "Volume", 280.f);
-    setupButton(highScoreButton, "Highest Score", 360.f);
-
-    auto setupBox = [](sf::RectangleShape& box, const sf::Text& text) {
-        box.setSize(sf::Vector2f(text.getGlobalBounds().width + 40.f, text.getGlobalBounds().height + 30.f));
-        box.setFillColor(sf::Color(150, 150, 150, 180));
-        box.setOutlineThickness(2.f);
-        box.setOutlineColor(sf::Color::Black);
-        box.setPosition(text.getPosition().x - 20.f, text.getPosition().y - 15.f);
-        };
-
-    setupBox(playButtonBox, playButton);
-    setupBox(quitButtonBox, quitButton);
-    setupBox(moreButtonBox, moreButton);
-    setupBox(retryButtonBox, retryButton);
-    setupBox(exitButtonBox, exitButton);
-    setupBox(tutorialButtonBox, tutorialButton);
-    setupBox(volumeButtonBox, volumeButton);
-    setupBox(highScoreButtonBox, highScoreButton);
-    setupBox(musicButton, musicText);
-    setupBox(sfxButton, sfxText);
-
-    // Volume Toggle Text
-    musicText.setFont(font);
-    musicText.setCharacterSize(28);
-    musicText.setFillColor(sf::Color::White);
-    musicText.setString("MUSIC: ON");
-    musicText.setScale(1.1f, 1.1f);
-    musicText.setPosition(centerX - musicText.getGlobalBounds().width / 2.f, 200.f);
-
-    sfxText.setFont(font);
-    sfxText.setCharacterSize(28);
-    sfxText.setFillColor(sf::Color::White);
-    sfxText.setString("SFX: ON");
-    sfxText.setScale(1.1f, 1.1f);
-    sfxText.setPosition(centerX - sfxText.getGlobalBounds().width / 2.f, 280.f);
-
-    // Volume Toggle Boxes
-    musicButton.setSize(sf::Vector2f(musicText.getGlobalBounds().width + 40.f, musicText.getGlobalBounds().height + 30.f));
-    musicButton.setFillColor(sf::Color(150, 150, 150, 180));
-    musicButton.setOutlineThickness(2.f);
-    musicButton.setOutlineColor(sf::Color::Black);
-    musicButton.setPosition(musicText.getPosition().x - 20.f, musicText.getPosition().y - 15.f);
-
-    sfxButton.setSize(sf::Vector2f(sfxText.getGlobalBounds().width + 40.f, sfxText.getGlobalBounds().height + 30.f));
-    sfxButton.setFillColor(sf::Color(150, 150, 150, 180));
-    sfxButton.setOutlineThickness(2.f);
-    sfxButton.setOutlineColor(sf::Color::Black);
-    sfxButton.setPosition(sfxText.getPosition().x - 20.f, sfxText.getPosition().y - 15.f);
-
-    // Return to Menu
-    returnButton.setFont(font);
-    returnButton.setString("Return to Menu");
-    returnButton.setCharacterSize(40);
-    returnButton.setFillColor(sf::Color::White);
-    returnButton.setPosition(window.getSize().x / 2.f - 140.f, 530.f);
-
-    returnButtonBox.setFillColor(sf::Color(0, 0, 0, 150));
-    returnButtonBox.setSize(sf::Vector2f(returnButton.getGlobalBounds().width + 40.f, returnButton.getGlobalBounds().height + 30.f));
-    returnButtonBox.setPosition(returnButton.getPosition().x - 20.f, returnButton.getPosition().y - 15.f);
-
-
-    loadHighScore();
     highScoreText.setFont(font);
     highScoreText.setCharacterSize(24);
     highScoreText.setFillColor(sf::Color::Yellow);
     highScoreText.setPosition(10.f, 70.f);
     highScoreText.setString("High Score: " + std::to_string(highScore));
 
-    // Hiển thị điểm cao nhất bên dưới nút Highest Score
     highScoreMenuText.setFont(font);
     highScoreMenuText.setCharacterSize(20);
     highScoreMenuText.setFillColor(sf::Color::Black);
     highScoreMenuText.setString("High Score: " + std::to_string(highScore));
+}
 
-    // Căn giữa bên dưới highScoreButtonBox
+void Game::setupUIButtons() {
+    float centerX = window.getSize().x / 2.f;
+    auto setupButtonFull = [&](sf::Text& text, sf::RectangleShape& box, const std::string& str, unsigned int charSize, float y) {
+        text.setFont(font);
+        text.setString(str);
+        text.setCharacterSize(charSize);
+        text.setFillColor(sf::Color::White);
+        text.setScale(1.f, 1.f);
+
+        sf::FloatRect textBounds = text.getLocalBounds();
+        text.setOrigin(textBounds.left + textBounds.width / 2.f, textBounds.top + textBounds.height / 2.f);
+        text.setPosition(centerX, y);
+
+        float paddingX = 40.f;
+        float paddingY = 20.f;
+        box.setSize(sf::Vector2f(textBounds.width + paddingX, textBounds.height + paddingY));
+        box.setOrigin(box.getSize().x / 2.f, box.getSize().y / 2.f);
+        box.setPosition(text.getPosition());
+        box.setFillColor(sf::Color(150, 150, 150, 180));
+        box.setOutlineThickness(2.f);
+        box.setOutlineColor(sf::Color::Black);
+        };
+
+    setupButtonFull(playButton, playButtonBox, "PLAY", 40, 230.f);
+    setupButtonFull(moreButton, moreButtonBox, "MORE", 40, 330.f);
+    setupButtonFull(quitButton, quitButtonBox, "QUIT", 40, 430.f);
+
+    setupButtonFull(retryButton, retryButtonBox, "RETRY", 40, 230.f);
+    setupButtonFull(exitButton, exitButtonBox, "EXIT", 40, 330.f);
+
+    setupButtonFull(tutorialButton, tutorialButtonBox, "TUTORIAL", 36, 200.f);
+    setupButtonFull(volumeButton, volumeButtonBox, "VOLUME", 36, 300.f);
+    setupButtonFull(highScoreButton, highScoreButtonBox, "HIGHSCORE", 36, 400.f);
+
+    setupButtonFull(musicText, musicButton, "MUSIC: ON", 45, 220.f);
+    setupButtonFull(sfxText, sfxButton, "SFX: ON", 45, 320.f);
+
+    setupButtonFull(returnButton, returnButtonBox, "RETURN TO MENU", 40, 430.f);
+
     float hsBoxCenter = highScoreButtonBox.getPosition().x + highScoreButtonBox.getSize().x / 2.f;
     float hsTextWidth = highScoreMenuText.getGlobalBounds().width;
     highScoreMenuText.setPosition(hsBoxCenter - hsTextWidth / 2.f,
         highScoreButtonBox.getPosition().y + highScoreButtonBox.getSize().y + 8.f);
+}
 
+void Game::setupButtonText(sf::Text& text, const std::string& str, unsigned int charSize) {
+    text.setFont(font);
+    text.setString(str);
+    text.setCharacterSize(charSize);
+    text.setFillColor(sf::Color::White);
+    text.setScale(1.f, 1.f);
+}
 
+void Game::setupAudio() {
     if (!clickBuffer.loadFromFile("assets/Sounds/click.wav"))
         std::cout << "❌ Không thể tải click.wav\n";
     else
@@ -215,6 +201,7 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), isRunning(true), 
         backgroundMusic.play();
     }
 }
+
 
 
 void Game::run()
@@ -291,7 +278,7 @@ void Game::processEvents()
                 {
                     clickSound.play();
                     isMusicOn = !isMusicOn;
-                    musicText.setString("Music: " + std::string(isMusicOn ? "ON" : "OFF"));
+                    musicText.setString("MUSIC: " + std::string(isMusicOn ? "ON" : "OFF"));
                     if (isMusicOn)
                         backgroundMusic.play();
                     else
@@ -326,6 +313,7 @@ void Game::processEvents()
                     waveNumber = 1;
                     enemyPerWave = 3;
                     enemySpawnedCount = 0;
+                    player.reset();
                 }
                 else if (returnButton.getGlobalBounds().contains(mousePos))
                 {
@@ -367,53 +355,61 @@ void Game::processEvents()
     }
 }
 
+void Game::updateMenuButtonHovers()
+{
+    sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+
+    auto updateButtonHover = [&](sf::Text& button, sf::RectangleShape& box) {
+        if (button.getGlobalBounds().contains(mousePos)) {
+            button.setFillColor(sf::Color::Yellow);
+        }
+        else {
+            button.setFillColor(sf::Color::White);
+        }
+        };
+
+    switch (gameState)
+    {
+    case GameState::Menu:
+        updateButtonHover(playButton, playButtonBox);
+        updateButtonHover(moreButton, moreButtonBox);
+        updateButtonHover(quitButton, quitButtonBox);
+        break;
+
+    case GameState::GameOver:
+        updateButtonHover(retryButton, retryButtonBox);
+        updateButtonHover(exitButton, exitButtonBox);
+        updateButtonHover(returnButton, returnButtonBox);
+        break;
+
+    case GameState::MoreMenu:
+        updateButtonHover(tutorialButton, tutorialButtonBox);
+        updateButtonHover(volumeButton, volumeButtonBox);
+        updateButtonHover(highScoreButton, highScoreButtonBox);
+        updateButtonHover(backButton, backButtonBox);
+        break;
+
+    case GameState::Volume:
+        updateButtonHover(musicText, musicButton);
+        updateButtonHover(sfxText, sfxButton);
+        updateButtonHover(backButton, backButtonBox);
+        break;
+
+    default:
+        break;
+    }
+}
+
+
+
 void Game::update(float dt)
 {
-    if (gameState == GameState::Menu || gameState == GameState::GameOver || gameState == GameState::MoreMenu)
+    if (gameState == GameState::Menu ||
+        gameState == GameState::GameOver ||
+        gameState == GameState::MoreMenu ||
+        gameState == GameState::Volume)
     {
-        sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-
-        auto updateButtonHover = [&](sf::Text& button, sf::RectangleShape& box) {
-            if (button.getGlobalBounds().contains(mousePos)) {
-                button.setFillColor(sf::Color::Yellow);
-                button.setScale(1.3f, 1.3f);
-            }
-            else {
-                button.setFillColor(sf::Color::White);
-                button.setScale(1.f, 1.f);
-            }
-
-            // Cập nhật kích thước và vị trí hộp bao
-            box.setSize(sf::Vector2f(button.getGlobalBounds().width + 40.f, button.getGlobalBounds().height + 30.f));
-            box.setPosition(button.getPosition().x - 20.f, button.getPosition().y - 15.f);
-            };
-
-        if (gameState == GameState::Menu) {
-            updateButtonHover(playButton, playButtonBox);
-            updateButtonHover(quitButton, quitButtonBox);
-            updateButtonHover(moreButton, moreButtonBox);
-        }
-        else if (gameState == GameState::GameOver) {
-            updateButtonHover(retryButton, retryButtonBox);
-            updateButtonHover(exitButton, exitButtonBox);
-            updateButtonHover(returnButton, returnButtonBox);
-            if (score > highScore) {
-                highScore = score;
-                saveHighScore();
-            }
-        }
-        else if (gameState == GameState::MoreMenu) {
-            updateButtonHover(tutorialButton, tutorialButtonBox);
-            updateButtonHover(volumeButton, volumeButtonBox);
-            updateButtonHover(highScoreButton, highScoreButtonBox);
-            updateButtonHover(backButton, backButtonBox);
-        }
-        else if (gameState == GameState::Volume) {
-            updateButtonHover(backButton, backButtonBox);
-            updateButtonHover(sfxText, sfxButton);
-            updateButtonHover(backButton, backButtonBox);
-        }
-
+        updateMenuButtonHovers();
         return;
     }
 
@@ -512,20 +508,18 @@ void Game::render()
     auto handleHover = [&](sf::Text& text, sf::RectangleShape& box) {
         if (text.getGlobalBounds().contains(mousePos)) {
             text.setFillColor(sf::Color::Yellow);
-            text.setScale(1.5f, 1.5f);
         }
         else {
             text.setFillColor(sf::Color::White);
-            text.setScale(1.3f, 1.3f);
-        }
-        // Cập nhật lại vị trí box theo scale mới
-        box.setSize(sf::Vector2f(text.getGlobalBounds().width + 40.f, text.getGlobalBounds().height + 30.f));
-        box.setPosition(text.getPosition().x - 20.f, text.getPosition().y - 15.f);
         };
+        };
+
 
     if (gameState == GameState::Menu)
     {
         window.draw(menuBackgroundSprite);
+
+        window.draw(gameTitle);
 
         // Hover và vẽ các nút chính
         handleHover(playButton, playButtonBox);
