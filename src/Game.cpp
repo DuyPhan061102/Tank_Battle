@@ -6,7 +6,7 @@
 
 Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), gameState(GameState::Menu), isRunning(true) 
 {
-    createMaze();
+
     player.setPosition(playerSpawnPosition);
 
     player.setWalls(&walls);
@@ -45,7 +45,7 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), gameState(GameSta
 
     if (!strongWallTexture.loadFromFile("assets/Images/strong_wall.png"))
         std::cout << "❌ Không thể tải strong_wall.png\n";
-
+    createMaze();
 
     scoreText.setFont(font);
     scoreText.setCharacterSize(24);
@@ -463,7 +463,7 @@ void Game::saveHighScore()
     }
 }
 void Game::createMaze() {
-    std::ifstream file("/Users/macos/Desktop/Tank_Battle/assets/Maps/maze.txt");
+    std::ifstream file("assets/Maps/maze.txt");
     if (!file.is_open()) {
         std::cerr << "❌ Không thể mở maze.txt\n";
         return;
@@ -489,13 +489,13 @@ void Game::createMaze() {
 
 switch (ch) {
     case '#': {
-        Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 10);
+        Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 15);
         w.setTexture(&wallTexture);  // Gán ảnh cho tường thường
         walls.push_back(w);
         break;
     }
     case '@': {
-        Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 9999);
+        Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 99999);
         w.setTexture(&strongWallTexture); // Gán ảnh cho tường bền
         walls.push_back(w);
         break;
