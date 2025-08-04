@@ -11,6 +11,8 @@
 #include <fstream> // để đọc/ghi file
 #include <memory>
 
+#include "Wall.h"
+
 // Trạng thái của game
 enum class GameState
 {
@@ -34,6 +36,13 @@ private:
 
     GameState gameState;     // trạng thái hiện tại của game
     bool isRunning;
+    // tường 
+    std::vector<Wall> walls;
+    // ảnh tường
+    sf::Texture wallTexture;
+    sf::Texture strongWallTexture;
+
+
 
     std::vector<std::unique_ptr<Enemy>> enemies;
     std::vector<Bullet> bullets;
@@ -102,6 +111,16 @@ private:
     sf::Sound shootSound;
     sf::Sound explosionSound;
 
+    // Điểm cao nhất
+    int highScore = 0;
+    sf::Text highScoreText;
+    // layout map
+    void createMaze();
+    sf::Vector2f playerSpawnPosition = sf::Vector2f(100.f, 100.f); // tank spawn theo S
+    std::vector<sf::Vector2f> enemySpawnPoints; // Enemy spawn
+    std::vector<int> enemySpawnCounts;  // Mỗi điểm spawn có tối đa 2 enemy
+    const int maxEnemiesPerSpawn = 2;  // mỗi vị trí tối đa 2 enemy
+
     // Bật tắt nhạc
     bool isMusicOn = true;
     bool isSFXOn = true;
@@ -115,6 +134,7 @@ private:
 
     void loadHighScore(); // đọc từ file
     void saveHighScore(); // ghi vào file
+
 
 public:
     Game();

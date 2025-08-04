@@ -3,6 +3,7 @@
 #include "Tank.h"
 #include <SFML/Graphics.hpp>
 #include "Bullet.h"
+#include "Wall.h"
 #include <vector>
 #include <cmath>
 #include <SFML/Audio.hpp> // Thêm dòng này
@@ -17,6 +18,10 @@ public:
     void move(float dx, float dy) override;
     void draw(sf::RenderWindow &window) const override;
 
+    sf::Clock& getWallDamageClock();
+    float getWallDamageCooldown() const;
+
+
     void shoot();
 
     void takeDamage(int dmg);
@@ -28,6 +33,7 @@ public:
     const std::vector<Bullet> &getBullets() const;
     std::vector<Bullet> &getBullets();
     void setShootSound(sf::Sound *sound);
+    void setWalls(std::vector<Wall> *walls);
     void reset();
     void resetHP();
 
@@ -44,6 +50,12 @@ private:
     sf::Clock shootClock;
     float shootCooldown = 0.3f;
     bool wasSpacePressedLastFrame = false;
+    
+    std::vector<Wall> *wallsPtr = nullptr;
+    mutable sf::Clock damageClock;
+    bool recentlyDamaged = false;
+    sf::Vector2f lastPosition;
+
     // hiệu ứng nổ
     sf::Texture explosionTexture;
     sf::Sprite explosionSprite;

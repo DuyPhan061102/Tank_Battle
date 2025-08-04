@@ -102,24 +102,77 @@ void PlayerTank::draw(sf::RenderWindow &window) const
     for (const auto &b : bullets)
         b.draw(window);
 }
+
+//update move
+void PlayerTank::move(float dx, float dy)
+{
+    sf::FloatRect bodyBounds = body.getGlobalBounds();
+    sf::FloatRect futureBounds = bodyBounds;
+    futureBounds.left += dx;
+    futureBounds.top += dy;
+
+    bool collision = false;
+    if (wallsPtr) {
+        for (const Wall& wall : *wallsPtr) {
+            if (wall.getBounds().intersects(futureBounds)) {
+                collision = true;
+                break;
+            }
+        }
+    }
+
+    if (!collision)
+        body.move(dx, dy);
+}
 void PlayerTank::update(float deltaTime)
 {
     handleInput();
+
+    // Di chuyển theo input
     move(movement.x * speed * deltaTime, movement.y * speed * deltaTime);
+
+    // Cập nhật thanh máu
     updateHealthBar();
 
-    for (auto &b : bullets)
-    {
+    // Cập nhật vị trí đạn
+    for (auto& b : bullets)
         b.update(deltaTime);
+
+    // Xử lý va chạm đạn <-> tường
+    for (auto it = bullets.begin(); it != bullets.end(); ) {
+        bool hitWall = false;
+
+        if (wallsPtr) {
+            for (Wall& wall : *wallsPtr) {
+                if (wall.getBounds().intersects(it->getBounds())) {
+                    wall.takeDamage();  // Tăng hitCount
+                    hitWall = true;
+                    break;
+                }
+            }
+        }
+
+        if (hitWall) {
+            it = bullets.erase(it);  // Xóa đạn sau khi bắn tường
+        } else {
+            ++it;
+        }
     }
 
+    // Xóa đạn nếu ra khỏi màn hình
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
-                                 [](const Bullet &b)
-                                 {
-                                     sf::Vector2f pos = b.getPosition();
-                                     return pos.x < 0 || pos.x > 800 || pos.y < 0 || pos.y > 600;
-                                 }),
-                  bullets.end());
+        [](const Bullet &b) {
+            sf::Vector2f pos = b.getPosition();
+            return pos.x < 0 || pos.x > 800 || pos.y < 0 || pos.y > 600;
+        }), bullets.end());
+
+    // Xoá tường đã bị phá (hitCount >= 3)
+    if (wallsPtr) {
+        wallsPtr->erase(
+            std::remove_if(wallsPtr->begin(), wallsPtr->end(),
+                           [](const Wall &wall) { return wall.isDestroyed(); }),
+            wallsPtr->end());
+    }
 
     if (isExploding)
     {
@@ -129,6 +182,7 @@ void PlayerTank::update(float deltaTime)
         return;
     }
 }
+
 void PlayerTank::move(float dx, float dy)
 {
     body.move(dx, dy);
@@ -208,18 +262,19 @@ std::vector<Bullet> &PlayerTank::getBullets()
 {
     return bullets;
 }
-
+void PlayerTank::setWalls(std::vector<Wall> *walls) {
+    wallsPtr = walls;
+}
 
 void PlayerTank::reset() {
     currentHealth = maxHealth;
+    updateHealthBar();
     bullets.clear();
     body.setPosition(400.f, 500.f);
     body.setRotation(0.f); 
 }
 
-void PlayerTank::resetHP()
-{
+void PlayerTank::resetHP() {
     currentHealth = maxHealth;
     updateHealthBar();
 }
-
