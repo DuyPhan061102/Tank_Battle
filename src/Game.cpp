@@ -1,3 +1,4 @@
+//Game.cpp
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
@@ -313,12 +314,14 @@ void Game::processEvents()
                     waveNumber = 1;
                     enemyPerWave = 3;
                     enemySpawnedCount = 0;
+
                     player.reset();
                 }
                 else if (returnButton.getGlobalBounds().contains(mousePos))
                 {
                     clickSound.play();
                     gameState = GameState::Menu;
+
                 }
                 else if (exitButton.getGlobalBounds().contains(mousePos))
                 {
@@ -426,8 +429,8 @@ void Game::update(float dt)
         enemySpawnClock.restart();
     }
 
-    for (auto& enemy : enemies)
-        enemy.update(dt);
+    for (auto &enemy : enemies)
+        enemy->update(dt);
 
     for (auto& bullet : bullets)
         bullet.update(dt);
@@ -442,28 +445,35 @@ void Game::update(float dt)
     auto& playerBullets = player.getBullets();
     for (auto b = playerBullets.begin(); b != playerBullets.end(); )
     {
-        bool bulletErased = false;
-        for (auto& enemy : enemies)
+for (auto b = playerBullets.begin(); b != playerBullets.end(); )
+{
+    bool bulletErased = false;
+    for (auto& enemy : enemies)
+    {
+        if (enemy->isHit(b->getBounds()))
         {
-            if (enemy.isHit(b->getBounds()))
-            {
-                b = playerBullets.erase(b);
-                explosionSound.play();
-                enemy.markToRemove();
-                bulletErased = true;
-                score += 100;
-                scoreText.setString("Score: " + std::to_string(score));
-                break;
-            }
+            b = playerBullets.erase(b);
+            explosionSound.play();
+            enemy->markToRemove();
+            bulletErased = true;
+            score += 100;
+            scoreText.setString("Score: " + std::to_string(score));
+            break;
+        }
+    }
+    if (!bulletErased)
+        ++b;
+}
         }
         if (!bulletErased)
             ++b;
     }
 
-    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
-        [](const Enemy& e)
-        { return e.shouldBeRemoved(); }),
-        enemies.end());
+enemies.erase(
+    std::remove_if(enemies.begin(), enemies.end(),
+                   [](const std::unique_ptr<Enemy>& e)
+                   { return e->shouldBeRemoved(); }),
+    enemies.end());
 
     if (enemies.empty() && enemySpawnedCount >= enemyPerWave)
     {
@@ -477,7 +487,7 @@ void Game::update(float dt)
     sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
     for (auto& enemy : enemies)
     {
-        if (enemy.isHit(playerBounds))
+        if (enemy->isHit(playerBounds))
         {
             player.takeDamage(20);
             if (player.getHP() <= 0)
@@ -551,6 +561,7 @@ void Game::render()
         window.draw(highScoreButton);
         if (showHighScoreText) {
             highScoreText.setString("Highest Score: " + std::to_string(highScore));
+
             window.draw(highScoreText);
         }
     }
@@ -616,10 +627,10 @@ void Game::spawnEnemy()
     float x = static_cast<float>(rand() % 700 + 50);
     float y = static_cast<float>(rand() % 500 + 50);
 
-    Enemy e(x, y);
-    e.setSpeed(50.f * std::pow(1.35f, waveNumber)); // tăng 35% mỗi wave
-
-    enemies.push_back(e);
+    // Sửa lại như sau:
+    auto e = std::make_unique<Enemy>(x, y);
+    e->setSpeed(50.f * std::pow(1.35f, waveNumber));
+    enemies.push_back(std::move(e));
     enemySpawnedCount++;
 }
 
