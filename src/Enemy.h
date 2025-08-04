@@ -1,3 +1,4 @@
+// Enemy.h
 #ifndef ENEMY_H
 #define ENEMY_H
 
@@ -9,24 +10,27 @@ class Enemy : public Tank
 {
 public:
     Enemy(float x, float y);
-    void move(float dx, float dy) override;
     void update(float deltaTime) override;
     void draw(sf::RenderWindow &window) const override;
-    
+    void move(float dx, float dy) override;
+    void setSpeed(float newSpeed);
     bool isHit(const sf::FloatRect &bounds);
     void markToRemove();
     bool shouldBeRemoved() const;
 
-    void setSpeed(float newSpeed); 
-
 private:
+    sf::Texture tankTexture;
+    sf::Sprite tankSprite;
     sf::Vector2f direction;
     float timeSinceDirectionChange;
-
-    // 🔻 Cần thêm cho hiệu ứng trúng đạn:
-    bool isHitEffect = false;
+    bool isHitEffect;
+    bool toBeRemoved;
     sf::Clock hitClock;
-    bool toBeRemoved = false;
+    //hiệu ứng nổ
+    sf::Texture explosionTexture;
+    sf::Sprite explosionSprite;
+    bool isExploding = false;
+    float explosionTimer = 0.f;
 };
 
 #endif

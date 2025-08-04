@@ -1,3 +1,4 @@
+// Player.h
 #pragma once
 #include "Tank.h"
 #include <SFML/Graphics.hpp>
@@ -20,23 +21,30 @@ public:
 
     void takeDamage(int dmg);
     int getHP() const;
-    void drawHP(sf::RenderWindow& window) const;
+    void drawHP(sf::RenderWindow &window) const;
     void updateHealthBar();
-    void setWindow(sf::RenderWindow* window);
-    const std::vector<Bullet>& getBullets() const;
-    std::vector<Bullet>& getBullets();
-    void setShootSound(sf::Sound* sound);
-
+    void setWindow(sf::RenderWindow *window);
+    const std::vector<Bullet> &getBullets() const;
+    std::vector<Bullet> &getBullets();
+    void setShootSound(sf::Sound *sound);
+    void resetHP();
 
 private:
+    sf::Texture tankTexture;
+    sf::Sprite tankSprite;
     sf::Vector2f movement;
     int maxHealth;
     int currentHealth;
     sf::RectangleShape healthBarBack;
     sf::RectangleShape healthBarFront;
     std::vector<Bullet> bullets;
-    sf::RenderWindow* windowPtr = nullptr;
+    sf::RenderWindow *windowPtr = nullptr;
     sf::Clock shootClock;
     float shootCooldown = 0.3f;
     bool wasSpacePressedLastFrame = false;
+    // hiệu ứng nổ
+    sf::Texture explosionTexture;
+    sf::Sprite explosionSprite;
+    bool isExploding = false;
+    float explosionTimer = 0.f;
 };

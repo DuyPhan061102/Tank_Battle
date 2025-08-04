@@ -1,3 +1,4 @@
+//Game.cpp
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
@@ -165,10 +166,10 @@ void Game::processEvents()
                     scoreText.setString("Score: 0");
                     bullets.clear();
                     enemies.clear();
-
                     waveNumber = 1;
                     enemyPerWave = 3;
                     enemySpawnedCount = 0;
+                    player.resetHP(); // <-- Thêm dòng này để hồi máu cho player
                 }
                 else if (exitButton.getGlobalBounds().contains(mousePos))
                 {
@@ -218,7 +219,7 @@ void Game::update(float dt)
     }
 
     for (auto &enemy : enemies)
-        enemy.update(dt);
+        enemy->update(dt);
 
     for (auto &bullet : bullets)
         bullet.update(dt);
@@ -237,11 +238,11 @@ for (auto b = playerBullets.begin(); b != playerBullets.end(); )
     bool bulletErased = false;
     for (auto& enemy : enemies)
     {
-        if (enemy.isHit(b->getBounds()))
+        if (enemy->isHit(b->getBounds()))
         {
             b = playerBullets.erase(b);
             explosionSound.play();
-            enemy.markToRemove();
+            enemy->markToRemove();
             bulletErased = true;
             score += 100;
             scoreText.setString("Score: " + std::to_string(score));
@@ -255,8 +256,8 @@ for (auto b = playerBullets.begin(); b != playerBullets.end(); )
     // Xóa enemy đã chết
     enemies.erase(
         std::remove_if(enemies.begin(), enemies.end(),
-                       [](const Enemy &e)
-                       { return e.shouldBeRemoved(); }),
+                       [](const std::unique_ptr<Enemy> &e)
+                       { return e->shouldBeRemoved(); }),
         enemies.end());
 
     // Nếu đã spawn đủ enemy và hiện tại đã clear hết -> tăng wave mới
@@ -275,7 +276,7 @@ for (auto b = playerBullets.begin(); b != playerBullets.end(); )
     sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
     for (auto &enemy : enemies)
     {
-        if (enemy.isHit(playerBounds))
+        if (enemy->isHit(playerBounds))
         {
             player.takeDamage(20);
 
@@ -333,7 +334,7 @@ void Game::render()
             for (const auto &bullet : player.getBullets())
                 bullet.draw(window);
             for (const auto &enemy : enemies)
-                enemy.draw(window);
+                enemy->draw(window);
             window.draw(scoreText);
             window.draw(waveText);
             window.draw(highScoreText);
@@ -360,10 +361,10 @@ void Game::spawnEnemy()
     float x = static_cast<float>(rand() % 700 + 50);
     float y = static_cast<float>(rand() % 500 + 50);
 
-    Enemy e(x, y);
-    e.setSpeed(50.f * std::pow(1.35f, waveNumber)); // tăng 35% mỗi wave
-
-    enemies.push_back(e);
+    // Sửa lại như sau:
+    auto e = std::make_unique<Enemy>(x, y);
+    e->setSpeed(50.f * std::pow(1.35f, waveNumber));
+    enemies.push_back(std::move(e));
     enemySpawnedCount++;
 }
 
