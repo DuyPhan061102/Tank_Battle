@@ -238,7 +238,7 @@ void Game::update(float dt)
 
     // Xử lý va chạm đạn <-> enemy
 auto& playerBullets = player.getBullets();
-std::vector<Enemy*> enemiesToHeal;
+
 for (auto b = playerBullets.begin(); b != playerBullets.end(); )
 {
     bool bulletErased = false;
@@ -253,9 +253,17 @@ for (auto b = playerBullets.begin(); b != playerBullets.end(); )
 
             // ✅ KHÔNG cần markToRemove ở đây
             if (enemy->shouldBeRemoved()) {
-                enemiesToHeal.push_back(enemy.get());
                 score += 100;
                 scoreText.setString("Score: " + std::to_string(score));
+                if (dynamic_cast<EnemyBoss*>(enemy.get())) {
+                    player.healByPercent(0.5f); // 50%
+                }
+                else if (dynamic_cast<EnemyTank*>(enemy.get())) {
+                    player.healByPercent(0.1f); // 10%
+                }
+                else if (dynamic_cast<EnemyScout*>(enemy.get())) {
+                    player.healByPercent(0.2f); // 20%
+                }
 
             }
             break;
@@ -264,19 +272,7 @@ for (auto b = playerBullets.begin(); b != playerBullets.end(); )
     if (!bulletErased)
         ++b;
 }
-for (auto& deadEnemy : enemiesToHeal) {
-    for (auto& other : enemies) {
-        if (other.get() != deadEnemy) {
-            float ratio = 0.f;
 
-            if (other->isBoss())                 ratio = 0.3f;
-            else if (other->getMaxHP() > 100)    ratio = 0.2f;
-            else                                 ratio = 0.5f;
-
-            other->heal(ratio);
-        }
-    }
-}
 
 
     // Xóa enemy đã chết

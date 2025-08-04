@@ -155,3 +155,11 @@ const std::vector<Bullet>& PlayerTank::getBullets() const {
 std::vector<Bullet>& PlayerTank::getBullets() {
     return bullets;
 }
+
+void PlayerTank::healByPercent(float percent)
+{
+    int healAmount = static_cast<int>(maxHealth * percent);
+    currentHealth += healAmount;
+    if (currentHealth > maxHealth)
+        currentHealth = maxHealth;
+}

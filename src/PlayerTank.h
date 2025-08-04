@@ -4,7 +4,7 @@
 #include "Bullet.h"
 #include <vector>
 #include <cmath>
-#include <SFML/Audio.hpp> // Thêm dòng này
+#include <SFML/Audio.hpp> 
 
 class PlayerTank : public Tank
 {
@@ -26,6 +26,9 @@ public:
     const std::vector<Bullet>& getBullets() const;
     std::vector<Bullet>& getBullets();
     void setShootSound(sf::Sound* sound);
+    void healByPercent(float percent);
+
+
 
 
 private:

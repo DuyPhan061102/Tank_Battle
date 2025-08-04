@@ -11,7 +11,7 @@ EnemyBoss::EnemyBoss(float x, float y) : Enemy(x, y, 30)
 
 void EnemyBoss::update(float deltaTime)
 {
-
+    speed = 25.f;
     Enemy::update(deltaTime);
 
 }
