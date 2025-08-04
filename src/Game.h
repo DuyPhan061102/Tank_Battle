@@ -1,3 +1,4 @@
+//Game.h
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
@@ -8,6 +9,7 @@
 #include <vector>
 #include <cmath>
 #include <fstream> // để đọc/ghi file
+#include <memory>
 
 #include "Wall.h"
 
@@ -16,7 +18,10 @@ enum class GameState
 {
     Menu,
     Playing,
-    GameOver
+    GameOver,
+    MoreMenu,
+    Tutorial,
+    Volume,
 };
 
 class Game
@@ -39,7 +44,7 @@ private:
 
 
 
-    std::vector<Enemy> enemies;
+    std::vector<std::unique_ptr<Enemy>> enemies;
     std::vector<Bullet> bullets;
     PlayerTank player;
 
@@ -56,15 +61,49 @@ private:
     sf::Text scoreText;
     sf::Text gameOverText;
     sf::Text waveText;
+    sf::Text highScoreText;
+    sf::Text highScoreMenuText;
+    sf::Text gameTitle;
 
     // Các nút menu và game over
     sf::Text playButton;
     sf::Text quitButton;
     sf::Text retryButton;
     sf::Text exitButton;
+    sf::Text moreButton;
+    sf::Text tutorialButton;
+    sf::Text volumeButton;
+    sf::Text highScoreButton;
+    sf::Text backButton;
+    sf::Text returnButton;
 
-    // Điểm số
-    int score = 0;
+    // Ô cho các nút menu
+    sf::RectangleShape playButtonBox;
+    sf::RectangleShape quitButtonBox;
+    sf::RectangleShape retryButtonBox;
+    sf::RectangleShape exitButtonBox;
+    sf::RectangleShape moreButtonBox;
+    sf::RectangleShape tutorialButtonBox;
+    sf::RectangleShape volumeButtonBox;
+    sf::RectangleShape highScoreButtonBox;
+    sf::RectangleShape backButtonBox;
+    sf::RectangleShape returnButtonBox;
+
+    // Menu tutorial
+    sf::RectangleShape tutorialBox;
+    sf::Text tutorialText;
+    sf::Sprite wasdSprite, spaceSprite, escSprite;
+    sf::Texture wasdTexture, spaceTexture, escTexture;
+
+    // Volume menu
+    sf::RectangleShape musicButton;
+    sf::Text musicText;
+    sf::RectangleShape sfxButton;
+    sf::Text sfxText;
+
+    // Âm thanh cho nút
+    sf::SoundBuffer clickBuffer;
+    sf::Sound clickSound;
 
     // Âm thanh
     sf::SoundBuffer shootBuffer;
@@ -80,16 +119,21 @@ private:
     sf::Vector2f playerSpawnPosition = sf::Vector2f(100.f, 100.f); // tank spawn theo S
     std::vector<sf::Vector2f> enemySpawnPoints; // Enemy spawn
     std::vector<int> enemySpawnCounts;  // Mỗi điểm spawn có tối đa 2 enemy
-
     const int maxEnemiesPerSpawn = 2;  // mỗi vị trí tối đa 2 enemy
 
+    // Bật tắt nhạc
+    bool isMusicOn = true;
+    bool isSFXOn = true;
 
-
-    void loadHighScore(); // đọc từ file
-    void saveHighScore(); // ghi vào file
+    // Điểm số
+    int score = 0;
+    int highScore = 0;
+    bool showHighScoreText = false;
 
     sf::Music backgroundMusic; // cài nhạc nền
 
+    void loadHighScore(); // đọc từ file
+    void saveHighScore(); // ghi vào file
 
 
 public:
@@ -101,4 +145,13 @@ private:
     void update(float dt);
     void render();
     void spawnEnemy();
+
+    void loadAssets();
+    void setupBackgrounds();
+    void setupFontsAndText();
+    void setupTutorial();
+    void setupUIButtons();
+    void setupAudio();
+    void setupButtonText(sf::Text& text, const std::string& str, unsigned int charSize);
+    void updateMenuButtonHovers();
 };
