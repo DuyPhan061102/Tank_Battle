@@ -26,6 +26,11 @@ private:
     bool isHitEffect;
     bool toBeRemoved;
     sf::Clock hitClock;
+    //hiệu ứng nổ
+    sf::Texture explosionTexture;
+    sf::Sprite explosionSprite;
+    bool isExploding = false;
+    float explosionTimer = 0.f;
 };
 
 #endif

@@ -10,6 +10,9 @@ private:
 	sf::RectangleShape shape;
 	sf::Vector2f direction;
 	float speed;
+	//skin đạn
+	sf::Texture bulletTexture;
+	sf::Sprite bulletSprite;
 
 public:
 	Bullet(const sf::Vector2f &startPos, const sf::Vector2f &dir, float speed = 100.f);
