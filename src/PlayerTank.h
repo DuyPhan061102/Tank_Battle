@@ -23,10 +23,12 @@ public:
     int getHP() const;
     void drawHP(sf::RenderWindow &window) const;
     void updateHealthBar();
+    
     void setWindow(sf::RenderWindow *window);
     const std::vector<Bullet> &getBullets() const;
     std::vector<Bullet> &getBullets();
     void setShootSound(sf::Sound *sound);
+    void reset();
     void resetHP();
 
 private:
