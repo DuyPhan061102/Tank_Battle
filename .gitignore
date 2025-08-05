@@ -42,4 +42,5 @@ Makefile
 bin/
 phong
 main
+highscore.txt
 

@@ -16,5 +16,8 @@ public:
     virtual void draw(sf::RenderWindow &window) const;
     void setPosition(const sf::Vector2f &pos); 
     sf::Vector2f getPosition() const;
+
     virtual sf::FloatRect getBounds() const;
+    float getSpeed() const;
 };
+
