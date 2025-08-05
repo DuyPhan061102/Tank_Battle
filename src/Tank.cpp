@@ -23,6 +23,10 @@ void Tank::setPosition(const sf::Vector2f &pos)
 {
     body.setPosition(pos);
 }
+
+sf::FloatRect Tank::getBounds() const {
+    return body.getGlobalBounds();
+}
 float Tank::getSpeed() const {
     return speed;
 }

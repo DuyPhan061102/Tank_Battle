@@ -6,7 +6,7 @@
 #include "Wall.h"
 #include <vector>
 #include <cmath>
-#include <SFML/Audio.hpp> // Thêm dòng này
+#include <SFML/Audio.hpp> 
 
 class PlayerTank : public Tank
 {
@@ -29,14 +29,15 @@ public:
     void drawHP(sf::RenderWindow &window) const;
     void updateHealthBar();
     
-    void setWindow(sf::RenderWindow *window);
-    const std::vector<Bullet> &getBullets() const;
-    std::vector<Bullet> &getBullets();
-    void setShootSound(sf::Sound *sound);
-    void setWalls(std::vector<Wall> *walls);
+    void setWindow(sf::RenderWindow* window);
+    const std::vector<Bullet>& getBullets() const;
+    std::vector<Bullet>& getBullets();
+    void setShootSound(sf::Sound* sound);
+    void setWalls(std::vector<Wall>* walls);
     void reset();
     void resetHP();
     void setTexture(const sf::Texture* texture);
+    void healByPercent(float percent);
 
 private:
     sf::Texture tankTexture;

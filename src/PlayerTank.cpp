@@ -257,6 +257,16 @@ std::vector<Bullet> &PlayerTank::getBullets()
 {
     return bullets;
 }
+
+
+void PlayerTank::healByPercent(float percent)
+{
+    int healAmount = static_cast<int>(maxHealth * percent);
+    currentHealth += healAmount;
+    if (currentHealth > maxHealth)
+        currentHealth = maxHealth;
+}
+
 void PlayerTank::setWalls(std::vector<Wall> *walls) {
     wallsPtr = walls;
 }
@@ -283,3 +293,4 @@ void PlayerTank::setTexture(const sf::Texture* texture)
         tankSprite.setScale(0.5f, 0.5f);
     }
 }
+

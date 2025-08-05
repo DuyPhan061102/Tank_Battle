@@ -13,7 +13,7 @@
 
 #include "Wall.h"
 
-// Trạng thái của game
+
 enum class GameState
 {
     Menu,

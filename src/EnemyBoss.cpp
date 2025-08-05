@@ -1,0 +1,26 @@
+#include "EnemyBoss.h"
+#include <SFML/Graphics.hpp>
+
+EnemyBoss::EnemyBoss(float x, float y) : Enemy(x, y, 30)
+{
+    body.setSize(sf::Vector2f(60.f, 60.f));
+    body.setFillColor(sf::Color::Red);
+    body.setPosition(x, y);
+}
+
+
+void EnemyBoss::update(float deltaTime)
+{
+    speed = 25.f;
+    Enemy::update(deltaTime);
+
+}
+
+bool EnemyBoss::isHit(const sf::FloatRect& bounds)
+{
+    if (getBounds().intersects(bounds)) {
+        takeDamage(1);
+        return hp <= 0;
+    }
+    return false;
+}
