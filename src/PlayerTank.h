@@ -36,6 +36,7 @@ public:
     void setWalls(std::vector<Wall> *walls);
     void reset();
     void resetHP();
+    void setTexture(const sf::Texture* texture);
 
 private:
     sf::Texture tankTexture;

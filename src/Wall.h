@@ -18,5 +18,3 @@ private:
     int maxHit;
     int hitCount = 0;
 };
-
-

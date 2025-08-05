@@ -47,6 +47,7 @@ private:
     std::vector<std::unique_ptr<Enemy>> enemies;
     std::vector<Bullet> bullets;
     PlayerTank player;
+    sf::Texture playerTexture;
 
     // ảnh nền
     sf::Texture backgroundTexture; // ảnh nền
@@ -61,7 +62,6 @@ private:
     sf::Text scoreText;
     sf::Text gameOverText;
     sf::Text waveText;
-    sf::Text highScoreText;
     sf::Text highScoreMenuText;
     sf::Text gameTitle;
 
@@ -112,7 +112,7 @@ private:
     sf::Sound explosionSound;
 
     // Điểm cao nhất
-    int highScore = 0;
+
     sf::Text highScoreText;
     // layout map
     void createMaze();

@@ -28,6 +28,3 @@ void Wall::setTexture(const sf::Texture* tex) {
     texture = tex;
     if (texture) shape.setTexture(texture);
 }
-
-
-

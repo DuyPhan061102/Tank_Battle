@@ -137,4 +137,3 @@ void Enemy::setSpeed(float newSpeed)
 {
     speed = newSpeed;
 }
-

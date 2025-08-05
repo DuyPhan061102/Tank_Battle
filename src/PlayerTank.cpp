@@ -91,7 +91,7 @@ void PlayerTank::draw(sf::RenderWindow &window) const
         window.draw(explosionSprite);
     else if (tankTexture.getSize().x > 0) {
         sf::Sprite sprite = tankSprite;
-        sprite.setPosition(body.getPosition().x + 20, body.getPosition().y + 20);
+        sprite.setPosition(body.getPosition());
         sprite.setRotation(body.getRotation());
         window.draw(sprite);
     } else {
@@ -183,11 +183,6 @@ void PlayerTank::update(float deltaTime)
     }
 }
 
-void PlayerTank::move(float dx, float dy)
-{
-    body.move(dx, dy);
-}
-
 sf::Sound *shootSoundPtr = nullptr;
 
 void PlayerTank::setShootSound(sf::Sound *sound)
@@ -277,4 +272,14 @@ void PlayerTank::reset() {
 void PlayerTank::resetHP() {
     currentHealth = maxHealth;
     updateHealthBar();
+}
+
+void PlayerTank::setTexture(const sf::Texture* texture)
+{
+    if (texture) {
+        tankTexture = *texture; // copy texture từ ngoài vào biến thành viên
+        tankSprite.setTexture(tankTexture);
+        tankSprite.setOrigin(tankTexture.getSize().x / 2.f, tankTexture.getSize().y / 2.f);
+        tankSprite.setScale(0.5f, 0.5f);
+    }
 }
