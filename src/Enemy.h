@@ -5,6 +5,7 @@
 #include "Tank.h"
 #include <SFML/System.hpp>
 #include <SFML/Graphics.hpp>
+#include"Wall.h"
 
 class Enemy : public Tank
 {
@@ -12,7 +13,8 @@ public:
  Enemy(float x, float y, int hp = 1);
 
     void move(float dx, float dy) override;
-    void update(float deltaTime) override;
+    void update(float deltaTime) override; // override hàm thuần ảo của Tank
+    virtual void update(float deltaTime, const std::vector<Wall>& walls); // hàm riêng cho Enemy
     void draw(sf::RenderWindow &window) const override;
 
     void setSpeed(float newSpeed);
@@ -21,11 +23,11 @@ public:
     bool shouldBeRemoved() const;
 
     void takeDamage(int amount);
-    void chasePlayer(const sf::Vector2f& playerPos, float dt);
+    void chasePlayer(const sf::Vector2f& playerPos, float dt, const std::vector<Wall>& walls);
     virtual bool isBoss() const { return false; }
     int getMaxHP() const;
     void heal(float ratio);
-private:
+protected:
     sf::Texture tankTexture;
     sf::Sprite tankSprite;
     sf::Vector2f direction;

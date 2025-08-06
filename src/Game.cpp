@@ -284,6 +284,7 @@ void Game::processEvents()
                     player.setWalls(&walls);
                     player.setWindow(&window);
                     player.setShootSound(&shootSound);
+                    player.setTexture(&playerTexture);
                     player.setPosition(playerSpawnPosition);
                     player.resetHP();                  // <-- Thêm dòng này để hồi máu player
                     player.setTexture(&playerTexture); // <-- Thêm dòng này
@@ -506,29 +507,8 @@ void Game::update(float dt)
 
     for (auto &enemy : enemies)
     {
-        // Nếu muốn enemy đuổi theo player:
-        enemy->chasePlayer(player.getPosition(), dt);
-        enemy->update(dt);
-    }
-
-    // Xử lý enemy va chạm với tường (walls)
-    for (auto &enemy : enemies)
-    {
-        sf::FloatRect enemyBounds(enemy->getPosition().x, enemy->getPosition().y, 40.f, 40.f);
-
-        for (const Wall &wall : walls)
-        {
-            if (wall.getBounds().intersects(enemyBounds))
-            {
-                // Đổi hướng hoặc quay đầu khi va chạm tường
-                enemy->setSpeed(-enemy->getSpeed());
-
-                // Hoặc đổi hướng ngẫu nhiên nếu muốn:
-                // int dir = rand() % 4; ... (như trong Enemy constructor)
-
-                break; // Xử lý xong một tường là đủ
-            }
-        }
+        enemy->chasePlayer(player.getPosition(), dt, walls);
+        enemy->update(dt, walls);
     }
 
     for (auto &bullet : bullets)
@@ -596,6 +576,7 @@ if (enemies.empty() && enemySpawnedCount >= enemyPerWave)
     waveNumber++;
     enemyPerWave += 2;
     enemySpawnedCount = 0;
+    enemies.clear(); // <-- Thêm dòng này
     waveText.setString("Wave: " + std::to_string(waveNumber));
     player.setPosition(playerSpawnPosition); // Spawn theo spawn point
     createMaze();
@@ -746,11 +727,17 @@ void Game::spawnEnemy()
     if (availableIndexes.empty())
         return; // Không còn chỗ spawn
 
-    int type = rand() % 10; // tăng phạm vi để có chỗ cho boss
+    int type = rand() % 10;
 
-    // Chọn ngẫu nhiên từ các vị trí còn trống
     int chosen = availableIndexes[rand() % availableIndexes.size()];
     sf::Vector2f spawnPos = enemySpawnPoints[chosen];
+
+    // Kiểm tra vị trí spawn hợp lệ
+    if (spawnPos.x < 0 || spawnPos.x > window.getSize().x - 40 ||
+        spawnPos.y < 0 || spawnPos.y > window.getSize().y - 40)
+    {
+        return; // Không spawn enemy ở vị trí này
+    }
 
     std::unique_ptr<Enemy> enemy;
 

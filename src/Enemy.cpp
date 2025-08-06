@@ -7,7 +7,7 @@
 Enemy::Enemy(float x, float y, int hpValue)
 {
     body.setPosition(x, y);
-    body.setSize(sf::Vector2f(30.f, 30.f)); // hoặc 24.f, 24.f
+    body.setSize(sf::Vector2f(30.f, 30.f));
     body.setFillColor(sf::Color::Red);
     speed = 50.f;
     timeSinceDirectionChange = 0.f;
@@ -16,16 +16,6 @@ Enemy::Enemy(float x, float y, int hpValue)
 
     hp = hpValue;
     maxHp = hpValue;
-
-    // Load ảnh tank enemy
-    if (!tankTexture.loadFromFile("assets/Images/tank2.png"))
-        std::cout << "❌ Không thể tải enemy_tank.png\n";
-    else {
-        tankSprite.setTexture(tankTexture);
-        tankSprite.setOrigin(tankTexture.getSize().x / 2.f, tankTexture.getSize().y / 2.f);
-        tankSprite.setScale(0.5f, 0.5f); // to hơn player một chút
-    }
-
 
     int dir = rand() % 4;
     if (dir == 0)
@@ -39,29 +29,56 @@ Enemy::Enemy(float x, float y, int hpValue)
 }
 
 
-void Enemy::update(float deltaTime)
+void Enemy::update(float deltaTime, const std::vector<Wall>& walls)
 {
     if (isExploding) {
         explosionTimer += deltaTime;
-        if (explosionTimer > 0.4f) { // hiệu ứng nổ 0.4 giây
+        if (explosionTimer > 0.4f) {
             toBeRemoved = true;
         }
-        return; // Không di chuyển nữa khi đang nổ
+        return;
     }
 
     sf::Vector2f pos = body.getPosition();
     sf::Vector2f size = body.getSize();
     sf::Vector2f newPos = pos + direction * speed * deltaTime;
 
-    if (newPos.x < 0 || newPos.x + size.x > 800)
-        direction.x = -direction.x;
-    if (newPos.y < 0 || newPos.y + size.y > 600)
-        direction.y = -direction.y;
+    // Tạo bounds mới cho enemy sau khi di chuyển
+    sf::FloatRect futureBounds(newPos.x, newPos.y, size.x, size.y);
 
-    body.move(direction * speed * deltaTime);
+    bool collision = false;
+    for (const Wall& wall : walls) {
+        if (wall.getBounds().intersects(futureBounds)) {
+            collision = true;
+            break;
+        }
+    }
+
+    // Kiểm tra biên map (window 800x600, enemy 40x40)
+    if (newPos.x < 0 || newPos.x + size.x > 800 ||
+        newPos.y < 0 || newPos.y + size.y > 600)
+    {
+        collision = true;
+    }
+
+    if (!collision) {
+        body.move(direction * speed * deltaTime);
+    } else {
+        // Đổi hướng ngẫu nhiên khi va chạm tường hoặc biên
+        int dir = rand() % 4;
+        if (dir == 0)
+            direction = {1.f, 0.f};
+        else if (dir == 1)
+            direction = {-1.f, 0.f};
+        else if (dir == 2)
+            direction = {0.f, 1.f};
+        else
+            direction = {0.f, -1.f};
+        timeSinceDirectionChange = 0.f;
+    }
 
     // Cập nhật vị trí sprite theo body
-    tankSprite.setPosition(body.getPosition().x + 15, body.getPosition().y + 15); // nửa size body
+    tankSprite.setPosition(body.getPosition());
 
     // Thêm đoạn này để quay sprite theo hướng di chuyển
     if (direction.x != 0.f || direction.y != 0.f) {
@@ -94,6 +111,13 @@ void Enemy::update(float deltaTime)
 
 }
 
+void Enemy::update(float deltaTime)
+{
+    // Gọi update với walls rỗng nếu không có walls
+    std::vector<Wall> emptyWalls;
+    update(deltaTime, emptyWalls);
+}
+
 void Enemy::draw(sf::RenderWindow &window) const
 {
     if (isExploding)
@@ -118,9 +142,11 @@ void Enemy::draw(sf::RenderWindow &window) const
 
 bool Enemy::isHit(const sf::FloatRect &bounds)
 {
-    if (!isHitEffect && body.getGlobalBounds().intersects(bounds))
+    // Nếu là va chạm với đạn (không phải player), luôn trừ máu
+    if (body.getGlobalBounds().intersects(bounds))
     {
-        takeDamage(1);  // ✅ GỌI HÀM MỚI
+        std::cout << "Enemy hit! HP: " << hp << std::endl;
+        takeDamage(1);
         return true;
     }
     return false;
@@ -166,7 +192,7 @@ void Enemy::setSpeed(float newSpeed)
     speed = newSpeed;
 }
 
-void Enemy::chasePlayer(const sf::Vector2f& playerPos, float dt)
+void Enemy::chasePlayer(const sf::Vector2f& playerPos, float dt, const std::vector<Wall>& walls)
 {
     sf::Vector2f pos = body.getPosition();
     sf::Vector2f dir = playerPos - pos;
@@ -175,7 +201,29 @@ void Enemy::chasePlayer(const sf::Vector2f& playerPos, float dt)
     if (len != 0.f)
         dir /= len;
 
-    body.move(dir * speed * dt);
+    sf::Vector2f movement = dir * speed * dt;
+    sf::FloatRect futureBounds = body.getGlobalBounds();
+    futureBounds.left += movement.x;
+    futureBounds.top += movement.y;
+
+    bool collision = false;
+    for (const Wall& wall : walls) {
+        if (wall.getBounds().intersects(futureBounds)) {
+            collision = true;
+            break;
+        }
+    }
+
+    // Kiểm tra biên map
+    if (futureBounds.left < 0 || futureBounds.left + futureBounds.width > 800 ||
+        futureBounds.top < 0 || futureBounds.top + futureBounds.height > 600)
+    {
+        collision = true;
+    }
+
+    if (!collision)
+        body.move(movement);
+    // Nếu va chạm thì không di chuyển hoặc có thể đổi hướng ngẫu nhiên
 }
 
 int Enemy::getMaxHP() const {
