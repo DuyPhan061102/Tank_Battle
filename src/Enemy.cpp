@@ -153,15 +153,19 @@ bool Enemy::isHit(const sf::FloatRect &bounds)
 }
 
 void Enemy::takeDamage(int amount)  
-{
+{   
+    if (isDead) return;
+    if (hp <= 0) return;
     hp -= amount;
+    if (hp < 0) hp = 0;
     isHitEffect = true;
     body.setFillColor(sf::Color::White);
     hitClock.restart();
 
-    if (hp <= 0)
+    if (hp == 0)
     {
         toBeRemoved = true;
+        isDead = true;
     }
 }
 
@@ -234,4 +238,7 @@ void Enemy::heal(float ratio) {
     int amount = static_cast<int>(maxHp * ratio);
     hp += amount;
     if (hp > maxHp) hp = maxHp;
+}
+int Enemy::getHP() const {
+    return hp;
 }

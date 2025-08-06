@@ -528,13 +528,17 @@ void Game::update(float dt)
         bool bulletErased = false;
         for (auto &enemy : enemies)
         {
+            if (enemy->getHP() <= 0)
+                continue;
             if (enemy->isHit(b->getBounds()))
             {
+                enemy->takeDamage(1);
                 b = playerBullets.erase(b);
                 explosionSound.play();
                 bulletErased = true;
 
                 // Đánh dấu hiệu ứng nổ (markToRemove) nếu muốn hiệu ứng nổ
+                if (enemy->getHP() <= 0)
                 enemy->markToRemove();
 
                 // Cộng điểm
@@ -542,7 +546,7 @@ void Game::update(float dt)
                 scoreText.setString("Score: " + std::to_string(score));
 
                 // Hồi máu cho player dựa trên loại enemy
-                if (enemy->shouldBeRemoved())
+                if (enemy->getHP() <= 0)
                 {
                     if (dynamic_cast<EnemyBoss *>(enemy.get()))
                     {
