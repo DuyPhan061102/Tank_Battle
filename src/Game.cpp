@@ -10,7 +10,7 @@
 
 Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), gameState(GameState::Menu), isRunning(true)
 {
-
+    //player1
     player.setPosition(playerSpawnPosition);
 
     player.setWalls(&walls);
@@ -21,6 +21,13 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), gameState(GameSta
     loadHighScore();
     player.setWindow(&window);
     player.setShootSound(&shootSound);
+
+    //player2
+    player2.setPosition(player2SpawnPosition); 
+    player2.setWalls(&walls);
+    player2.setWindow(&window);
+    player2.setShootSound(&shootSound);
+
 
     loadAssets();
     setupBackgrounds();
@@ -117,6 +124,18 @@ void Game::setupFontsAndText()
     scoreText.setPosition(10.f, 10.f);
     scoreText.setString("Score: 0");
 
+    scoreText1.setFont(font);
+    scoreText1.setCharacterSize(20);
+    scoreText1.setFillColor(sf::Color::Red);
+    scoreText1.setPosition(10.f, 10.f);
+    scoreText1.setString("P1 Score: 0");
+
+    scoreText2.setFont(font);
+    scoreText2.setCharacterSize(20);
+    scoreText2.setFillColor(sf::Color::Blue);
+    scoreText2.setPosition(10.f, 40.f);
+    scoreText2.setString("P2 Score: 0");
+
     waveText.setFont(font);
     waveText.setCharacterSize(24);
     waveText.setFillColor(sf::Color::Cyan);
@@ -176,6 +195,7 @@ void Game::setupUIButtons()
     };
 
     setupButtonFull(playButton, playButtonBox, "PLAY", 40, 230.f);
+    setupButtonFull(pvpButton, pvpButtonBox, "PvsP", 40, 280.f);
     setupButtonFull(moreButton, moreButtonBox, "MORE", 40, 330.f);
     setupButtonFull(quitButton, quitButtonBox, "QUIT", 40, 430.f);
 
@@ -286,8 +306,37 @@ void Game::processEvents()
                     player.setShootSound(&shootSound);
                     player.setTexture(&playerTexture);
                     player.setPosition(playerSpawnPosition);
-                    player.resetHP();                  // <-- Thêm dòng này để hồi máu player
-                    player.setTexture(&playerTexture); // <-- Thêm dòng này
+                    player.resetHP();                  
+                    player.setTexture(&playerTexture); 
+
+                    createMaze();
+                }
+
+                else if (pvpButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    gameState = GameState::PvsP;
+                    isRunning = true;
+                    bullets.clear();
+                    enemies.clear();
+
+                    // Reset player 1
+                    player = PlayerTank();
+                    player.setWalls(&walls);
+                    player.setWindow(&window);
+                    player.setShootSound(&shootSound);
+                    player.setTexture(&playerTexture);
+                    player.setPosition(playerSpawnPosition);
+                    player.resetHP();
+
+                    // Reset player 2
+                    player2 = Player2Tank(); // 👈 bạn cần có class này
+                    player2.setWalls(&walls);
+                    player2.setWindow(&window);
+                    player2.setShootSound(&shootSound);
+                    player2.setTexture(&playerTexture); // bạn có thể thay bằng player2Texture nếu có
+                    player2.setPosition(player2SpawnPosition); // cần spawn position riêng
+                    player2.resetHP();
 
                     createMaze();
                 }
@@ -352,26 +401,56 @@ void Game::processEvents()
                 if (retryButton.getGlobalBounds().contains(mousePos))
                 {
                     clickSound.play();
-                    gameState = GameState::Playing;
                     isRunning = true;
-                    score = 0;
-                    scoreText.setString("Score: 0");
                     bullets.clear();
                     enemies.clear();
-                    waveNumber = 1;
-                    enemyPerWave = 3;
-                    enemySpawnedCount = 0;
+                    if (lastGameState == GameState::PvsP)
+                    {
+                        gameState = GameState::PvsP;
+                        p1score = 0;
+                        p2score = 0;
 
-                    // 👉 Thêm các dòng sau để khởi tạo lại player và map:
-                    player = PlayerTank();
-                    player.setWalls(&walls);
-                    player.setWindow(&window);
-                    player.setShootSound(&shootSound);
-                    player.setPosition(playerSpawnPosition); // ✅ dùng spawnPoint từ map
-                    player.resetHP();
-                    player.setTexture(&playerTexture); // <-- Thêm dòng này
+                        player = PlayerTank();
+                        player.setWalls(&walls);
+                        player.setWindow(&window);
+                        player.setShootSound(&shootSound);
+                        player.setTexture(&playerTexture);
+                        player.setPosition(playerSpawnPosition);
+                        player.resetHP();
+                        player.clearBullets();
 
-                    createMaze();
+                        player2 = Player2Tank();
+                        player2.setWalls(&walls);
+                        player2.setWindow(&window);
+                        player2.setShootSound(&shootSound);
+                        player2.setTexture(&playerTexture);
+                        player2.setPosition(player2SpawnPosition);
+                        player2.resetHP();
+                        player2.clearBullets();
+
+                        createMaze();
+                    }
+                    else
+                    {
+                        gameState = GameState::Playing;
+                        score = 0;
+                        scoreText.setString("Score: 0");
+
+                        waveNumber = 1;
+                        enemyPerWave = 3;
+                        enemySpawnedCount = 0;
+
+
+                        player = PlayerTank();
+                        player.setWalls(&walls);
+                        player.setWindow(&window);
+                        player.setShootSound(&shootSound);
+                        player.setPosition(playerSpawnPosition);
+                        player.resetHP();
+                        player.setTexture(&playerTexture);
+
+                        createMaze();
+                    }
                 }
                 else if (returnButton.getGlobalBounds().contains(mousePos))
                 {
@@ -410,6 +489,8 @@ void Game::processEvents()
     if (isRunning)
     {
         player.handleInput();
+        if (gameState == GameState::PvsP)
+            player2.handleInput();
     }
 }
 
@@ -461,6 +542,21 @@ void Game::updateMenuButtonHovers()
     }
 }
 
+void Game::resetPvsPRound()
+{
+    player.resetHP();
+    player2.resetHP();
+
+    player2.resetExplosion();
+    player.setPosition(sf::Vector2f(400.f, 500.f)); 
+    player2.setPosition(sf::Vector2f(400.f, 100.f));
+
+    player.clearBullets();     
+    player2.clearBullets();
+
+
+}
+
 void Game::update(float dt)
 {
     if (gameState == GameState::Menu ||
@@ -475,58 +571,35 @@ void Game::update(float dt)
     if (!isRunning)
         return;
 
-    waveText.setString("Wave: " + std::to_string(waveNumber));
-
-    player.update(dt);
-    // Xóa tường
-    walls.erase(
-        std::remove_if(walls.begin(), walls.end(),
-                       [](const Wall &w)
-                       { return w.isDestroyed(); }),
-        walls.end());
 
     // Kiểm tra máu sau khi cập nhật
-    if (player.getHP() <= 0 && gameState == GameState::Playing)
-    {
-        isRunning = false;
-        gameState = GameState::GameOver;
+    
 
-        if (score > highScore)
+    if (gameState == GameState::Playing)
+    {
+        for (auto& enemy : enemies)
         {
-            highScore = score;
-            saveHighScore();
-            highScoreText.setString("High Score: " + std::to_string(highScore));
+            enemy->chasePlayer(player.getPosition(), dt, walls);
+            enemy->update(dt, walls);
         }
-        return; // Không cần xử lý gì thêm
-    }
-    if (enemySpawnClock.getElapsedTime().asSeconds() > 3.f)
-    {
-        spawnEnemy();
-        enemySpawnClock.restart();
     }
 
-    for (auto &enemy : enemies)
-    {
-        enemy->chasePlayer(player.getPosition(), dt, walls);
-        enemy->update(dt, walls);
-    }
-
-    for (auto &bullet : bullets)
+    for (auto& bullet : bullets)
         bullet.update(dt);
 
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
-                                 [this](const Bullet &b)
-                                 {
-                                     return b.isOffScreen(window);
-                                 }),
-                  bullets.end());
+        [this](const Bullet& b)
+        {
+            return b.isOffScreen(window);
+        }),
+        bullets.end());
 
     // Xử lý va chạm đạn <-> enemy
-    auto &playerBullets = player.getBullets();
+    auto& playerBullets = player.getBullets();
     for (auto b = playerBullets.begin(); b != playerBullets.end();)
     {
         bool bulletErased = false;
-        for (auto &enemy : enemies)
+        for (auto& enemy : enemies)
         {
             if (enemy->getHP() <= 0)
                 continue;
@@ -539,7 +612,7 @@ void Game::update(float dt)
 
                 // Đánh dấu hiệu ứng nổ (markToRemove) nếu muốn hiệu ứng nổ
                 if (enemy->getHP() <= 0)
-                enemy->markToRemove();
+                    enemy->markToRemove();
 
                 // Cộng điểm
                 score += 100;
@@ -548,15 +621,15 @@ void Game::update(float dt)
                 // Hồi máu cho player dựa trên loại enemy
                 if (enemy->getHP() <= 0)
                 {
-                    if (dynamic_cast<EnemyBoss *>(enemy.get()))
+                    if (dynamic_cast<EnemyBoss*>(enemy.get()))
                     {
                         player.healByPercent(0.5f); // 50%
                     }
-                    else if (dynamic_cast<EnemyTank *>(enemy.get()))
+                    else if (dynamic_cast<EnemyTank*>(enemy.get()))
                     {
                         player.healByPercent(0.1f); // 10%
                     }
-                    else if (dynamic_cast<EnemyScout *>(enemy.get()))
+                    else if (dynamic_cast<EnemyScout*>(enemy.get()))
                     {
                         player.healByPercent(0.2f); // 20%
                     }
@@ -568,47 +641,129 @@ void Game::update(float dt)
             ++b;
     }
 
-// Xóa enemy đã chết
-enemies.erase(
-    std::remove_if(enemies.begin(), enemies.end(),
-                   [](const std::unique_ptr<Enemy> &e)
-                   { return e->shouldBeRemoved(); }),
-    enemies.end());
+    // Xóa enemy đã chết
+    enemies.erase(
+        std::remove_if(enemies.begin(), enemies.end(),
+            [](const std::unique_ptr<Enemy>& e)
+            { return e->shouldBeRemoved(); }),
+        enemies.end());
 
-if (enemies.empty() && enemySpawnedCount >= enemyPerWave)
-{
-    waveNumber++;
-    enemyPerWave += 2;
-    enemySpawnedCount = 0;
-    enemies.clear(); // <-- Thêm dòng này
+    if (enemies.empty() && enemySpawnedCount >= enemyPerWave)
+    {
+        waveNumber++;
+        enemyPerWave += 2;
+        enemySpawnedCount = 0;
+        enemies.clear();
+        waveText.setString("Wave: " + std::to_string(waveNumber));
+        player.setPosition(playerSpawnPosition); // Spawn theo spawn point
+        createMaze();
+    }
+
+    // Va chạm enemy với player
+    sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
+    for (auto& enemy : enemies)
+    {
+        if (enemy->isHit(playerBounds))
+        {
+            player.takeDamage(20);
+        }
+    }
+    if (gameState == GameState::Playing && player.getHP() <= 0)
+    {
+        isRunning = false;
+        //lastGameState = gameState;
+        gameState = GameState::GameOver;
+
+        if (score > highScore)
+        {
+            highScore = score;
+            saveHighScore();
+            highScoreText.setString("High Score: " + std::to_string(highScore));
+        }
+    }
+    else if (gameState == GameState::PvsP)   
+    {
+        if (player.getHP() <= 0)
+        {
+            p2score++;
+            resetPvsPRound();
+        }
+        if (player2.getHP() <= 0)
+        {
+            p1score++;
+            resetPvsPRound();
+        }
+        if (p1score >= 3)
+        {
+            isRunning = false;
+            lastGameState = GameState::PvsP;
+            gameState = GameState::GameOver;
+            gameOverText.setString("Player 1 win!");
+        }
+        else if (p2score >= 3)
+        {
+            isRunning = false;
+            lastGameState = GameState::PvsP;
+            gameState = GameState::GameOver;
+            gameOverText.setString("Player 2 win!");
+        }
+        
+    }
+
     waveText.setString("Wave: " + std::to_string(waveNumber));
-    player.setPosition(playerSpawnPosition); // Spawn theo spawn point
-    createMaze();
-}
 
-// Va chạm enemy với player
-sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
-for (auto &enemy : enemies)
-{
-    if (enemy->isHit(playerBounds))
+    player.update(dt);
+
+    if (gameState == GameState::Playing && enemySpawnClock.getElapsedTime().asSeconds() > 3.f)
     {
-        player.takeDamage(20); // hoặc giá trị bạn muốn, nên chọn 20 cho hợp lý
+        spawnEnemy();
+        enemySpawnClock.restart();
     }
-}
-if (player.getHP() <= 0)
-{
-    isRunning = false;
-    gameState = GameState::GameOver;
 
-    if (score > highScore)
-    {
-        highScore = score;
-        saveHighScore();
-        highScoreText.setString("High Score: " + std::to_string(highScore));
+    if (gameState == GameState::PvsP) {
+        
+        player2.update(dt);
+
+        // Xử lý va chạm đạn player1 -> player2
+        auto& p1Bullets = player.getBullets();
+        for (auto b = p1Bullets.begin(); b != p1Bullets.end();) {
+            if (player2.getBounds().intersects(b->getBounds())) {
+                player2.takeDamage(10);
+                b = p1Bullets.erase(b);
+                explosionSound.play();
+            }
+            else {
+                ++b;
+            }
+        }
+
+        auto& p2Bullets = player2.getBullets();
+        for (auto b = p2Bullets.begin(); b != p2Bullets.end();) {
+            if (player.getBounds().intersects(b->getBounds())) {
+                player.takeDamage(10);
+                b = p2Bullets.erase(b);
+                explosionSound.play();
+            }
+            else {
+                ++b;
+            }
+        }
+        scoreText1.setString("P1 Score: " + std::to_string(p1score));
+        scoreText2.setString("P2 Score: " + std::to_string(p2score));
     }
-}
-}
+    
+   
 
+
+    // Xóa tường
+    walls.erase(
+        std::remove_if(walls.begin(), walls.end(),
+            [](const Wall& w)
+            { return w.isDestroyed(); }),
+        walls.end());
+
+   
+}
 void Game::render()
 {
     window.clear();
@@ -628,9 +783,11 @@ void Game::render()
         window.draw(menuBackgroundSprite);
         window.draw(gameTitle);
         handleHover(playButton, playButtonBox);
+        handleHover(pvpButton, pvpButtonBox);
         handleHover(quitButton, quitButtonBox);
         handleHover(moreButton, moreButtonBox);
         window.draw(playButtonBox);
+        window.draw(pvpButtonBox);
         window.draw(quitButtonBox);
         window.draw(moreButtonBox);
         window.draw(playButton);
@@ -652,6 +809,23 @@ void Game::render()
         window.draw(highScoreText);
         if (!isRunning)
             window.draw(gameOverText);
+    }
+    else if (gameState == GameState::Playing || gameState == GameState::PvsP) {
+        window.draw(backgroundSprite);
+        for (const Wall& wall : walls)
+            wall.draw(window);
+
+        player.draw(window);
+        
+
+        // Thêm hiển thị player2 trong chế độ PvP
+        if (gameState == GameState::PvsP) {
+            player2.draw(window);
+            player2.drawHP(window);
+            window.draw(scoreText1);
+            window.draw(scoreText2);
+
+        }
     }
     else if (gameState == GameState::MoreMenu)
     {
@@ -758,6 +932,7 @@ void Game::spawnEnemy()
     enemySpawnCounts[chosen]++; // tăng số enemy ở vị trí này
     enemySpawnedCount++;
 }
+
 
 void Game::loadHighScore()
 {
