@@ -125,7 +125,7 @@ void PlayerTank::move(float dx, float dy)
 }
 void PlayerTank::update(float deltaTime)
 {
-    //handleInput();
+    handleInput();
 
     // Di chuyển theo input
     move(movement.x * speed * deltaTime, movement.y * speed * deltaTime);

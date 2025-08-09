@@ -79,6 +79,50 @@ void Player2Tank::update(float deltaTime) {
     for (auto& bullet : bullets) {
         bullet.update(deltaTime);
     }
+    // X? l? va ch?m ð?n <-> tý?ng
+    for (auto it = bullets.begin(); it != bullets.end(); ) {
+        bool hitWall = false;
+
+        if (wallsPtr) {
+            for (Wall& wall : *wallsPtr) {
+                if (wall.getBounds().intersects(it->getBounds())) {
+                    wall.takeDamage();  // Tãng hitCount
+                    hitWall = true;
+                    break;
+                }
+            }
+        }
+
+        if (hitWall) {
+            it = bullets.erase(it);  // Xóa ð?n sau khi b?n tý?ng
+        }
+        else {
+            ++it;
+        }
+    }
+
+    // Xóa ð?n n?u ra kh?i màn h?nh
+    bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
+        [](const Bullet& b) {
+            sf::Vector2f pos = b.getPosition();
+            return pos.x < 0 || pos.x > 800 || pos.y < 0 || pos.y > 600;
+        }), bullets.end());
+
+    // Xoá tý?ng ð? b? phá (hitCount >= 3)
+    if (wallsPtr) {
+        wallsPtr->erase(
+            std::remove_if(wallsPtr->begin(), wallsPtr->end(),
+                [](const Wall& wall) { return wall.isDestroyed(); }),
+            wallsPtr->end());
+    }
+
+    if (isExploding)
+    {
+        explosionTimer += deltaTime;
+        if (explosionTimer > 0.4f) // hi?u ?ng n? 0.4 giây
+            isExploding = false;
+        return;
+    }
 
 }
 
