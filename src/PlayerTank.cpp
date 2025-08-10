@@ -10,11 +10,10 @@ PlayerTank::PlayerTank()
 {
     speed = 200.f;
     body.setFillColor(sf::Color::Green);
-    body.setSize(sf::Vector2f(22.f, 22.f)); // hoặc 16.f, 20.f tuỳ ý chỉnh kích thước
+    body.setSize(sf::Vector2f(22.f, 22.f)); 
     currentHealth = 100;
     maxHealth = 100;
 
-    // Load ảnh tank
     if (!tankTexture.loadFromFile("assets/Images/tank1.png"))
         std::cout << "❌ Không thể tải player_tank.png\n";
     else
@@ -22,7 +21,7 @@ PlayerTank::PlayerTank()
         tankSprite.setTexture(tankTexture);
         tankSprite.setOrigin(tankTexture.getSize().x / 2.f, tankTexture.getSize().y / 2.f);
         tankSprite.setPosition(body.getPosition());
-        tankSprite.setScale(0.5f, 0.5f); // thử 0.4 hoặc 0.5 cho nhỏ hơn nữa
+        tankSprite.setScale(0.5f, 0.5f); 
     }
 
     healthBarBack.setSize(sf::Vector2f(100, 10));
@@ -213,7 +212,7 @@ void PlayerTank::takeDamage(int damage)
         currentHealth = 0;
 
     // Kích hoạt hiệu ứng nổ mỗi lần mất máu
-    if (explosionTexture.getSize().x > 0) {
+    if (currentHealth == 0 && explosionTexture.getSize().x > 0) {
         explosionSprite.setTexture(explosionTexture);
         explosionSprite.setOrigin(explosionTexture.getSize().x / 2.f, explosionTexture.getSize().y / 2.f);
         explosionSprite.setPosition(body.getPosition().x + body.getSize().x / 2, body.getPosition().y + body.getSize().y / 2);
@@ -293,4 +292,10 @@ void PlayerTank::setTexture(const sf::Texture* texture)
         tankSprite.setScale(0.5f, 0.5f);
     }
 }
+
+void PlayerTank::clearBullets()
+{
+    bullets.clear();
+}
+
 

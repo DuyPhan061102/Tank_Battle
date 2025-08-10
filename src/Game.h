@@ -3,6 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include "PlayerTank.h"
+#include "Player2Tank.h"
 #include "Tank.h"
 #include "Enemy.h"
 #include "Bullet.h"
@@ -18,6 +19,7 @@ enum class GameState
 {
     Menu,
     Playing,
+    PvsP,
     GameOver,
     MoreMenu,
     Tutorial,
@@ -34,6 +36,7 @@ private:
     sf::Clock clock;
     sf::Clock enemySpawnClock;
 
+    GameState lastGameState;
     GameState gameState;     // trạng thái hiện tại của game
     bool isRunning;
     // tường 
@@ -47,6 +50,8 @@ private:
     std::vector<std::unique_ptr<Enemy>> enemies;
     std::vector<Bullet> bullets;
     PlayerTank player;
+    Player2Tank player2;
+    
     sf::Texture playerTexture;
 
     // ảnh nền
@@ -64,9 +69,13 @@ private:
     sf::Text waveText;
     sf::Text highScoreMenuText;
     sf::Text gameTitle;
+    sf::Text scoreText1;
+    sf::Text scoreText2;
 
-    // Các nút menu và game over
+
+    // Các nút menu và game over va pvsp
     sf::Text playButton;
+    sf::Text pvpButton;
     sf::Text quitButton;
     sf::Text retryButton;
     sf::Text exitButton;
@@ -79,6 +88,7 @@ private:
 
     // Ô cho các nút menu
     sf::RectangleShape playButtonBox;
+    sf::RectangleShape pvpButtonBox;
     sf::RectangleShape quitButtonBox;
     sf::RectangleShape retryButtonBox;
     sf::RectangleShape exitButtonBox;
@@ -117,6 +127,7 @@ private:
     // layout map
     void createMaze();
     sf::Vector2f playerSpawnPosition = sf::Vector2f(100.f, 100.f); // tank spawn theo S
+    sf::Vector2f player2SpawnPosition = { 600.f, 500.f };
     std::vector<sf::Vector2f> enemySpawnPoints; // Enemy spawn
     std::vector<int> enemySpawnCounts;  // Mỗi điểm spawn có tối đa 2 enemy
     const int maxEnemiesPerSpawn = 2;  // mỗi vị trí tối đa 2 enemy
@@ -129,6 +140,9 @@ private:
     int score = 0;
     int highScore = 0;
     bool showHighScoreText = false;
+    int p1score = 0;
+    int p2score = 0;
+    
 
     sf::Music backgroundMusic; // cài nhạc nền
 
@@ -154,4 +168,6 @@ private:
     void setupAudio();
     void setupButtonText(sf::Text& text, const std::string& str, unsigned int charSize);
     void updateMenuButtonHovers();
+    void resetPvsPRound();
 };
+

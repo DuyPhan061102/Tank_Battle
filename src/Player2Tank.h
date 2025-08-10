@@ -1,4 +1,3 @@
-// Player.h
 #pragma once
 #include "Tank.h"
 #include <SFML/Graphics.hpp>
@@ -8,22 +7,21 @@
 #include <cmath>
 #include <SFML/Audio.hpp> 
 
-class PlayerTank : public Tank
-{
-public:
-    PlayerTank();
+class Bullet; 
 
-    void handleInput();
+class Player2Tank : public Tank {
+public:
+    Player2Tank();
+    void handleInput(); 
     void update(float deltaTime) override;
     void move(float dx, float dy) override;
-    void draw(sf::RenderWindow &window) const override;
+    void draw(sf::RenderWindow& window) const override;
 
     void shoot();
     void takeDamage(int damage);
     int getHP() const;
-    void drawHP(sf::RenderWindow &window) const;
+    void drawHP(sf::RenderWindow& window) const;
     void updateHealthBar();
-    
     void setWindow(sf::RenderWindow* window);
     const std::vector<Bullet>& getBullets() const;
     std::vector<Bullet>& getBullets();
@@ -34,30 +32,25 @@ public:
     void setTexture(const sf::Texture* texture);
     void healByPercent(float percent);
     void clearBullets();
+    void resetExplosion();
     
-
+    
 private:
-    sf::Texture tankTexture;
-    sf::Sprite tankSprite;
     sf::Vector2f movement;
-    int maxHealth;
-    int currentHealth;
-    sf::RectangleShape healthBarBack;
-    sf::RectangleShape healthBarFront;
+    bool wasEnterPressedLastFrame = false;
     std::vector<Bullet> bullets;
-    sf::RenderWindow *windowPtr = nullptr;
-    sf::Clock shootClock;
-    float shootCooldown = 0.3f;
-    bool wasSpacePressedLastFrame = false;
-    
-    std::vector<Wall> *wallsPtr = nullptr;
-    mutable sf::Clock damageClock;
-    bool recentlyDamaged = false;
-    sf::Vector2f lastPosition;
-
-    // hiệu ứng nổ
+    std::vector<Wall>* wallsPtr = nullptr;
+    int currentHealth;
+    int maxHealth;
     sf::Texture explosionTexture;
     sf::Sprite explosionSprite;
     bool isExploding = false;
     float explosionTimer = 0.f;
+    sf::Sound* shootSoundPtr = nullptr;
+    sf::RenderWindow* windowPtr = nullptr;
+    sf::Texture tankTexture;
+    sf::Sprite tankSprite;
+    sf::RectangleShape healthBarBack;
+    sf::RectangleShape healthBarFront;
+    
 };
