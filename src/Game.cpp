@@ -646,7 +646,7 @@ void Game::update(float dt)
         }
     }
 
-    // Nếu ở wave 5 và giết đủ 10 enemy thì mở cổng
+    // Nếu ở wave 5 và giết đủ 8 enemy thì mở cổng
     if (waveNumber == 5 && enemyKilledCount >= 8 && !gateActive)
     {
         gateActive = true;
