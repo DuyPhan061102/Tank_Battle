@@ -17,11 +17,12 @@ EnemyScout::EnemyScout(float x, float y) : Enemy(x, y, 3)
 void EnemyScout::update(float deltaTime)
 {
     std::vector<Wall> emptyWalls;
-    update(deltaTime, emptyWalls);
+    sf::Vector2f dummyPlayerPos(0.0f, 0.0f);
+    update(deltaTime, emptyWalls, dummyPlayerPos);
 }
 
-void EnemyScout::update(float deltaTime, const std::vector<Wall>& walls)
+void EnemyScout::update(float deltaTime, const std::vector<Wall> &walls, const sf::Vector2f &playerPos)
 {
     speed = 90.f;
-    Enemy::update(deltaTime, walls);
+    Enemy::update(deltaTime, walls, playerPos);
 }

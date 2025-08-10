@@ -107,14 +107,6 @@ void Game::setupTutorial()
     tutorialText.setPosition(80.f, 100.f);
 }
 
-/*
-    if (!wallTexture.loadFromFile("assets/Images/wall.png"))
-        std::cout << "❌ Không thể tải wall.png\n";
-
-    if (!strongWallTexture.loadFromFile("assets/Images/strong_wall.png"))
-        std::cout << "❌ Không thể tải strong_wall.png\n";
-    createMaze();*/
-
 void Game::setupFontsAndText()
 {
 
@@ -584,7 +576,15 @@ void Game::update(float dt)
         }
     }
 
-    for (auto& bullet : bullets)
+
+    for (auto &enemy : enemies)
+    {
+        enemy->chasePlayer(player.getPosition(), dt, walls);
+        enemy->setWindow(&window); // Để enemy có thể xóa đạn ra khỏi màn hình
+        enemy->update(dt, walls, player.getPosition());
+    }
+
+    for (auto &bullet : bullets)
         bullet.update(dt);
 
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
@@ -640,6 +640,26 @@ void Game::update(float dt)
         if (!bulletErased)
             ++b;
     }
+    // Kiểm tra va chạm đạn enemy với player
+    for (auto &enemy : enemies)
+    {
+        auto &enemyBullets = enemy->getBullets();
+        for (auto it = enemyBullets.begin(); it != enemyBullets.end();)
+        {
+            if (it->getBounds().intersects(player.getBounds()))
+            {
+                player.takeDamage(10);
+                it = enemyBullets.erase(it);
+
+                // Hiệu ứng khi player bị bắn trúng
+                std::cout << "Player bị enemy bắn trúng! HP: " << player.getHP() << std::endl;
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
 
     // Xóa enemy đã chết
     enemies.erase(
@@ -668,10 +688,11 @@ void Game::update(float dt)
             player.takeDamage(20);
         }
     }
+
+    // Xử lý điều kiện kết thúc game cho cả chế độ thường và PvsP
     if (gameState == GameState::Playing && player.getHP() <= 0)
     {
         isRunning = false;
-        //lastGameState = gameState;
         gameState = GameState::GameOver;
 
         if (score > highScore)
@@ -707,7 +728,6 @@ void Game::update(float dt)
             gameState = GameState::GameOver;
             gameOverText.setString("Player 2 win!");
         }
-        
     }
 
     waveText.setString("Wave: " + std::to_string(waveNumber));
