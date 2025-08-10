@@ -572,7 +572,7 @@ void Game::update(float dt)
         for (auto& enemy : enemies)
         {
             enemy->chasePlayer(player.getPosition(), dt, walls);
-            enemy->update(dt, walls);
+            enemy->update(dt, walls, player.getPosition());
         }
     }
 
