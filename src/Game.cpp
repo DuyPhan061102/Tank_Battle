@@ -58,6 +58,16 @@ void Game::loadAssets()
 
     if (!playerTexture.loadFromFile("assets/Images/tank1.png"))
         std::cout << "❌ Không thể tải player_tank.png\n";
+
+    if (!exitGateTexture.loadFromFile("assets/Images/exit_gate.png"))
+    {
+        std::cerr << "❌ Không thể load exit_gate.png\n";
+    }
+    else
+    {
+        exitGate.setTexture(exitGateTexture);
+        exitGate.setScale(80.f / exitGateTexture.getSize().x, 80.f / exitGateTexture.getSize().y);
+    }
 }
 
 void Game::setupBackgrounds()
@@ -384,6 +394,39 @@ void Game::processEvents()
                     window.close();
                 }
             }
+            else if (gameState == GameState::Victory)
+            {
+                if (retryButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    gameState = GameState::Playing;
+                    isRunning = true;
+                    score = 0;
+                    scoreText.setString("Score: 0");
+                    bullets.clear();
+                    enemies.clear();
+                    waveNumber = 1;
+                    enemyPerWave = 3;
+                    enemySpawnedCount = 0;
+                    enemyKilledCount = 0;
+                    gateActive = false;
+
+                    player = PlayerTank();
+                    player.setWalls(&walls);
+                    player.setWindow(&window);
+                    player.setShootSound(&shootSound);
+                    player.setTexture(&playerTexture);
+                    player.setPosition(playerSpawnPosition);
+                    player.resetHP();
+
+                    createMaze("assets/Maps/maze1.txt");
+                }
+                else if (exitButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    window.close();
+                }
+            }
         }
 
         // ESC để quay lại Menu
@@ -472,53 +515,51 @@ void Game::update(float dt)
         return;
     }
 
-    if (!isRunning)
-        return;
+    if (!isRunning) return;
 
     waveText.setString("Wave: " + std::to_string(waveNumber));
-
     player.update(dt);
-    // Xóa tường
+
+    // Xóa tường đã bị phá
     walls.erase(
         std::remove_if(walls.begin(), walls.end(),
-                       [](const Wall &w)
-                       { return w.isDestroyed(); }),
+                       [](const Wall &w) { return w.isDestroyed(); }),
         walls.end());
 
-    // Kiểm tra máu sau khi cập nhật
+    // Kiểm tra máu player
     if (player.getHP() <= 0 && gameState == GameState::Playing)
     {
         isRunning = false;
         gameState = GameState::GameOver;
-
         if (score > highScore)
         {
             highScore = score;
             saveHighScore();
             highScoreText.setString("High Score: " + std::to_string(highScore));
         }
-        return; // Không cần xử lý gì thêm
+        return;
     }
+
+    // Spawn enemy
     if (enemySpawnClock.getElapsedTime().asSeconds() > 3.f)
     {
-        spawnEnemy();
+        spawnEnemy(); // wave 5 vẫn spawn vô tận
         enemySpawnClock.restart();
     }
 
+    // Update enemy
     for (auto &enemy : enemies)
     {
         enemy->chasePlayer(player.getPosition(), dt, walls);
         enemy->update(dt, walls);
     }
 
+    // Update bullets
     for (auto &bullet : bullets)
         bullet.update(dt);
 
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
-                                 [this](const Bullet &b)
-                                 {
-                                     return b.isOffScreen(window);
-                                 }),
+                                 [this](const Bullet &b) { return b.isOffScreen(window); }),
                   bullets.end());
 
     // Xử lý va chạm đạn <-> enemy
@@ -528,8 +569,7 @@ void Game::update(float dt)
         bool bulletErased = false;
         for (auto &enemy : enemies)
         {
-            if (enemy->getHP() <= 0)
-                continue;
+            if (enemy->getHP() <= 0) continue;
             if (enemy->isHit(b->getBounds()))
             {
                 enemy->takeDamage(1);
@@ -537,29 +577,19 @@ void Game::update(float dt)
                 explosionSound.play();
                 bulletErased = true;
 
-                // Đánh dấu hiệu ứng nổ (markToRemove) nếu muốn hiệu ứng nổ
-                if (enemy->getHP() <= 0)
-                enemy->markToRemove();
-
-                // Cộng điểm
-                score += 100;
-                scoreText.setString("Score: " + std::to_string(score));
-
-                // Hồi máu cho player dựa trên loại enemy
                 if (enemy->getHP() <= 0)
                 {
+                    enemy->markToRemove();
+                    score += 100;
+                    scoreText.setString("Score: " + std::to_string(score));
+                    enemyKilledCount++;
+
                     if (dynamic_cast<EnemyBoss *>(enemy.get()))
-                    {
-                        player.healByPercent(0.5f); // 50%
-                    }
+                        player.healByPercent(0.5f);
                     else if (dynamic_cast<EnemyTank *>(enemy.get()))
-                    {
-                        player.healByPercent(0.1f); // 10%
-                    }
+                        player.healByPercent(0.1f);
                     else if (dynamic_cast<EnemyScout *>(enemy.get()))
-                    {
-                        player.healByPercent(0.2f); // 20%
-                    }
+                        player.healByPercent(0.2f);
                 }
                 break;
             }
@@ -568,48 +598,72 @@ void Game::update(float dt)
             ++b;
     }
 
-// Xóa enemy đã chết
-enemies.erase(
-    std::remove_if(enemies.begin(), enemies.end(),
-                   [](const std::unique_ptr<Enemy> &e)
-                   { return e->shouldBeRemoved(); }),
-    enemies.end());
+    // Xóa enemy đã chết
+    enemies.erase(
+        std::remove_if(enemies.begin(), enemies.end(),
+                       [](const std::unique_ptr<Enemy> &e) { return e->shouldBeRemoved(); }),
+        enemies.end());
 
-if (enemies.empty() && enemySpawnedCount >= enemyPerWave)
-{
-    waveNumber++;
-    enemyPerWave += 2;
-    enemySpawnedCount = 0;
-    enemies.clear(); // <-- Thêm dòng này
-    waveText.setString("Wave: " + std::to_string(waveNumber));
-    player.setPosition(playerSpawnPosition); // Spawn theo spawn point
-    // Load map tương ứng wave
-    if (waveNumber == 2) createMaze("assets/Maps/maze2.txt");
-    else if (waveNumber == 3) createMaze("assets/Maps/maze3.txt");
-    else if (waveNumber == 4) createMaze("assets/Maps/maze4.txt");
-}
-
-// Va chạm enemy với player
-sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
-for (auto &enemy : enemies)
-{
-    if (enemy->isHit(playerBounds))
+    // Chuyển wave nếu chưa phải wave 5
+    if (enemies.empty() && enemySpawnedCount >= enemyPerWave && waveNumber < 5)
     {
-        player.takeDamage(20); // hoặc giá trị bạn muốn, nên chọn 20 cho hợp lý
-    }
-}
-if (player.getHP() <= 0)
-{
-    isRunning = false;
-    gameState = GameState::GameOver;
+        waveNumber++;
+        enemyPerWave += 2;
+        enemySpawnedCount = 0;
+        waveText.setString("Wave: " + std::to_string(waveNumber));
+        player.setPosition(playerSpawnPosition);
 
-    if (score > highScore)
-    {
-        highScore = score;
-        saveHighScore();
-        highScoreText.setString("High Score: " + std::to_string(highScore));
+        if (waveNumber == 5)
+        {
+            enemyKilledCount = 0;
+            createMaze("assets/Maps/maze5.txt");
+        }
+        else if (waveNumber == 2)
+            createMaze("assets/Maps/maze2.txt");
+        else if (waveNumber == 3)
+            createMaze("assets/Maps/maze3.txt");
+        else if (waveNumber == 4)
+            createMaze("assets/Maps/maze4.txt");
     }
-}
+
+    // Nếu ở wave 5 và giết đủ 10 enemy thì mở cổng
+    if (waveNumber == 5 && enemyKilledCount >= 10 && !gateActive)
+    {
+        gateActive = true;
+        sf::FloatRect gateBounds = exitGate.getLocalBounds();
+        exitGate.setOrigin(gateBounds.width / 2.f, gateBounds.height / 2.f);
+        exitGate.setPosition(window.getSize().x / 2.f, window.getSize().y / 2.f);
+    }
+
+    // Kiểm tra player chạm cổng
+    if (gateActive && player.getBounds().intersects(exitGate.getGlobalBounds()))
+    {
+        isRunning = false;
+        gameState = GameState::Victory;
+    }
+
+    // Va chạm enemy <-> player
+    sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
+    for (auto &enemy : enemies)
+    {
+        if (enemy->isHit(playerBounds))
+        {
+            player.takeDamage(20);
+        }
+    }
+
+    // Kiểm tra thua
+    if (player.getHP() <= 0)
+    {
+        isRunning = false;
+        gameState = GameState::GameOver;
+        if (score > highScore)
+        {
+            highScore = score;
+            saveHighScore();
+            highScoreText.setString("High Score: " + std::to_string(highScore));
+        }
+    }
 }
 
 void Game::render()
@@ -643,19 +697,55 @@ void Game::render()
     else if (gameState == GameState::Playing)
     {
         window.draw(backgroundSprite);
+
         for (const Wall &wall : walls)
             wall.draw(window);
+
         player.draw(window);
+
         for (const auto &enemy : enemies)
             enemy->draw(window);
+
         for (const auto &bullet : player.getBullets())
             bullet.draw(window);
+
         window.draw(scoreText);
         window.draw(waveText);
         window.draw(highScoreText);
+
+        if (gateActive)
+            window.draw(exitGate);
+
         if (!isRunning)
             window.draw(gameOverText);
     }
+    else if (gameState == GameState::Victory)
+    {
+        window.draw(menuBackgroundSprite);
+
+        sf::Text victoryText;
+        victoryText.setFont(font);
+        victoryText.setCharacterSize(50);
+        victoryText.setFillColor(sf::Color::Yellow);
+        victoryText.setString("YOU WIN!");
+
+        sf::FloatRect textBounds = victoryText.getLocalBounds();
+        victoryText.setOrigin(textBounds.left + textBounds.width / 2.f,
+                              textBounds.top + textBounds.height / 2.f);
+        victoryText.setPosition(window.getSize().x / 2.f, window.getSize().y / 2.f - 100.f);
+
+        window.draw(victoryText);
+
+        window.draw(victoryText);
+
+        handleHover(retryButton, retryButtonBox);
+        handleHover(exitButton, exitButtonBox);
+        window.draw(retryButtonBox);
+        window.draw(exitButtonBox);
+        window.draw(retryButton);
+        window.draw(exitButton);
+    }
+
     else if (gameState == GameState::MoreMenu)
     {
         window.draw(menuBackgroundSprite);
@@ -720,47 +810,35 @@ void Game::render()
 
 void Game::spawnEnemy()
 {
-    if (enemySpawnedCount >= enemyPerWave || enemySpawnPoints.empty())
-        return;
+    if (enemySpawnPoints.empty()) return;
 
-    // Lọc các vị trí còn spawn được
     std::vector<int> availableIndexes;
     for (int i = 0; i < enemySpawnCounts.size(); ++i)
     {
-        if (enemySpawnCounts[i] < maxEnemiesPerSpawn)
+        // Ở wave 5, bỏ qua giới hạn spawn, chỉ kiểm tra các điểm spawn hợp lệ.
+        // Ở các wave khác, giới hạn số kẻ thù tại mỗi điểm spawn.
+        if (waveNumber == 5 || enemySpawnCounts[i] < maxEnemiesPerSpawn)
             availableIndexes.push_back(i);
     }
-
-    if (availableIndexes.empty())
-        return; // Không còn chỗ spawn
+    
+    if (availableIndexes.empty()) return;
 
     int type = rand() % 10;
-
     int chosen = availableIndexes[rand() % availableIndexes.size()];
     sf::Vector2f spawnPos = enemySpawnPoints[chosen];
 
-    // Kiểm tra vị trí spawn hợp lệ
-    if (spawnPos.x < 0 || spawnPos.x > window.getSize().x - 40 ||
-        spawnPos.y < 0 || spawnPos.y > window.getSize().y - 40)
-    {
-        return; // Không spawn enemy ở vị trí này
-    }
-
     std::unique_ptr<Enemy> enemy;
-
-    if (type < 5) // 50%
-        enemy = std::make_unique<EnemyTank>(spawnPos.x, spawnPos.y);
-    else if (type < 9) // 40%
-        enemy = std::make_unique<EnemyScout>(spawnPos.x, spawnPos.y);
-    else // type == 9, 10% boss
-        enemy = std::make_unique<EnemyBoss>(spawnPos.x, spawnPos.y);
+    if (type < 5) enemy = std::make_unique<EnemyTank>(spawnPos.x, spawnPos.y);
+    else if (type < 9) enemy = std::make_unique<EnemyScout>(spawnPos.x, spawnPos.y);
+    else enemy = std::make_unique<EnemyBoss>(spawnPos.x, spawnPos.y);
 
     enemy->setSpeed(50.f * static_cast<float>(std::pow(1.35f, waveNumber)));
-
     enemies.push_back(std::move(enemy));
-    enemySpawnCounts[chosen]++; // tăng số enemy ở vị trí này
-    enemySpawnedCount++;
+    enemySpawnCounts[chosen]++;
+    if (waveNumber < 5) enemySpawnedCount++;
 }
+
+
 
 void Game::loadHighScore()
 {
@@ -793,9 +871,11 @@ void Game::saveHighScore()
         file.close();
     }
 }
-void Game::createMaze(const std::string& mapFile) {
+void Game::createMaze(const std::string &mapFile)
+{
     std::ifstream file(mapFile);
-    if (!file.is_open()) {
+    if (!file.is_open())
+    {
         std::cerr << "❌ Không thể mở " << mapFile << "\n";
         return;
     }
@@ -808,19 +888,24 @@ void Game::createMaze(const std::string& mapFile) {
     int row = 0;
     const int tileSize = 40;
 
-    while (std::getline(file, line)) {
-        for (int col = 0; col < line.size(); ++col) {
+    while (std::getline(file, line))
+    {
+        for (int col = 0; col < line.size(); ++col)
+        {
             char ch = line[col];
             sf::Vector2f pos(col * tileSize, row * tileSize);
 
-            switch (ch) {
-            case '#': {
+            switch (ch)
+            {
+            case '#':
+            {
                 Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 10);
                 w.setTexture(&wallTexture);
                 walls.push_back(w);
                 break;
             }
-            case '@': {
+            case '@':
+            {
                 Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 999999);
                 w.setTexture(&strongWallTexture);
                 walls.push_back(w);
@@ -830,7 +915,8 @@ void Game::createMaze(const std::string& mapFile) {
                 playerSpawnPosition = pos;
                 break;
             case 'E':
-                if (enemySpawnPoints.size() < 5) {
+                if (enemySpawnPoints.size() < 5)
+                {
                     enemySpawnPoints.push_back(pos);
                     enemySpawnCounts.push_back(0);
                 }

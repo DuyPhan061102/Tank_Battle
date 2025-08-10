@@ -23,6 +23,7 @@ enum class GameState
     MoreMenu,
     Tutorial,
     Volume,
+    Victory
 };
 
 class Game
@@ -137,6 +138,13 @@ private:
 
     void loadHighScore(); // đọc từ file
     void saveHighScore(); // ghi vào file
+
+    // Cổng thoát
+    sf::Sprite exitGate;
+    sf::Texture exitGateTexture;
+    bool gateActive = false;
+    int enemyKilledCount = 0;
+
 
 
 public:
