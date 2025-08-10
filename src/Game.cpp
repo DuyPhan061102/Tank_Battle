@@ -286,7 +286,7 @@ void Game::processEvents()
                     bullets.clear();
                     enemies.clear();
                     waveNumber = 1;
-                    enemyPerWave = 3;
+                    enemyPerWave = 2;
                     enemySpawnedCount = 0;
                     enemyKilledCount = 0; // ✅ reset
                     gateActive = false;   // ✅ reset
@@ -371,7 +371,7 @@ void Game::processEvents()
                     bullets.clear();
                     enemies.clear();
                     waveNumber = 1;
-                    enemyPerWave = 3;
+                    enemyPerWave = 2;
                     enemySpawnedCount = 0;
                     enemyKilledCount = 0; // ✅ reset
                     gateActive = false;   // ✅ reset
@@ -410,7 +410,7 @@ void Game::processEvents()
                     bullets.clear();
                     enemies.clear();
                     waveNumber = 1;
-                    enemyPerWave = 3;
+                    enemyPerWave = 2;
                     enemySpawnedCount = 0;
                     enemyKilledCount = 0;
                     gateActive = false;
@@ -625,17 +625,17 @@ void Game::update(float dt)
         // Gán số lượng kẻ thù tổng cộng cho wave mới
         if (waveNumber == 2)
         {
-            enemyPerWave = 0; // Wave 2: 4 kẻ thù
+            enemyPerWave = 2; // Wave 2: 2 kẻ thù
             createMaze("assets/Maps/maze2.txt");
         }
         else if (waveNumber == 3)
         {
-            enemyPerWave = 0; // Wave 3: 5 kẻ thù
+            enemyPerWave = 3; // Wave 3: 3 kẻ thù
             createMaze("assets/Maps/maze3.txt");
         }
         else if (waveNumber == 4)
         {
-            enemyPerWave = 0; // Wave 4: 6 kẻ thù
+            enemyPerWave = 4; // Wave 4: 4 kẻ thù
             createMaze("assets/Maps/maze4.txt");
         }
         else if (waveNumber == 5)
@@ -647,7 +647,7 @@ void Game::update(float dt)
     }
 
     // Nếu ở wave 5 và giết đủ 10 enemy thì mở cổng
-    if (waveNumber == 5 && enemyKilledCount >= 0 && !gateActive)
+    if (waveNumber == 5 && enemyKilledCount >= 8 && !gateActive)
     {
         gateActive = true;
         sf::FloatRect gateBounds = exitGate.getLocalBounds();
