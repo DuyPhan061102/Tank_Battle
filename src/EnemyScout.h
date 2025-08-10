@@ -6,5 +6,4 @@ class EnemyScout : public Enemy
 public:
     EnemyScout(float x, float y);
     void update(float deltaTime) override;
-    void update(float deltaTime, const std::vector<Wall> &walls) override;
-};
+void update(float deltaTime, const std::vector<Wall>& walls, const sf::Vector2f& playerPos) override;};
