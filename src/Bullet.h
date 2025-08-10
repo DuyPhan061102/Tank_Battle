@@ -10,7 +10,7 @@ private:
 	sf::RectangleShape shape;
 	sf::Vector2f direction;
 	float speed;
-	//skin đạn
+	// skin đạn
 	sf::Texture bulletTexture;
 	sf::Sprite bulletSprite;
 
@@ -21,6 +21,7 @@ public:
 	bool isOffScreen(const sf::RenderWindow &window) const;
 	sf::FloatRect getBounds() const;
 	const sf::Vector2f &getPosition() const;
+
 };
 
 #endif

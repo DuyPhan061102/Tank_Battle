@@ -16,18 +16,21 @@ EnemyBoss::EnemyBoss(float x, float y) : Enemy(x, y, 30)
         tankSprite.setScale(0.7f, 0.7f); // boss to hơn
     }
     body.setPosition(x, y);
+    shootCooldown = 1.0f; // Bắn nhanh hơn
+    shootRange = 400.0f;  // Tầm bắn xa hơn
 }
 
 void EnemyBoss::update(float deltaTime)
 {
     std::vector<Wall> emptyWalls;
-    update(deltaTime, emptyWalls);
+    sf::Vector2f dummyPlayerPos(0.0f, 0.0f);
+    update(deltaTime, emptyWalls, dummyPlayerPos);
 }
 
-void EnemyBoss::update(float deltaTime, const std::vector<Wall>& walls)
+void EnemyBoss::update(float deltaTime, const std::vector<Wall>& walls, const sf::Vector2f& playerPos)
 {
     speed = 25.f;
-    Enemy::update(deltaTime, walls);
+    Enemy::update(deltaTime, walls, playerPos);
 }
 
 bool EnemyBoss::isHit(const sf::FloatRect &bounds)

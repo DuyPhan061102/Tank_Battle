@@ -100,14 +100,6 @@ void Game::setupTutorial()
     tutorialText.setPosition(80.f, 100.f);
 }
 
-/*
-    if (!wallTexture.loadFromFile("assets/Images/wall.png"))
-        std::cout << "❌ Không thể tải wall.png\n";
-
-    if (!strongWallTexture.loadFromFile("assets/Images/strong_wall.png"))
-        std::cout << "❌ Không thể tải strong_wall.png\n";
-    createMaze();*/
-
 void Game::setupFontsAndText()
 {
 
@@ -508,7 +500,8 @@ void Game::update(float dt)
     for (auto &enemy : enemies)
     {
         enemy->chasePlayer(player.getPosition(), dt, walls);
-        enemy->update(dt, walls);
+        enemy->setWindow(&window); // Để enemy có thể xóa đạn ra khỏi màn hình
+        enemy->update(dt, walls, player.getPosition());
     }
 
     for (auto &bullet : bullets)
@@ -539,7 +532,7 @@ void Game::update(float dt)
 
                 // Đánh dấu hiệu ứng nổ (markToRemove) nếu muốn hiệu ứng nổ
                 if (enemy->getHP() <= 0)
-                enemy->markToRemove();
+                    enemy->markToRemove();
 
                 // Cộng điểm
                 score += 100;
@@ -568,45 +561,66 @@ void Game::update(float dt)
             ++b;
     }
 
-// Xóa enemy đã chết
-enemies.erase(
-    std::remove_if(enemies.begin(), enemies.end(),
-                   [](const std::unique_ptr<Enemy> &e)
-                   { return e->shouldBeRemoved(); }),
-    enemies.end());
-
-if (enemies.empty() && enemySpawnedCount >= enemyPerWave)
-{
-    waveNumber++;
-    enemyPerWave += 2;
-    enemySpawnedCount = 0;
-    enemies.clear(); // <-- Thêm dòng này
-    waveText.setString("Wave: " + std::to_string(waveNumber));
-    player.setPosition(playerSpawnPosition); // Spawn theo spawn point
-    createMaze();
-}
-
-// Va chạm enemy với player
-sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
-for (auto &enemy : enemies)
-{
-    if (enemy->isHit(playerBounds))
+    // Kiểm tra va chạm đạn enemy với player
+    for (auto &enemy : enemies)
     {
-        player.takeDamage(20); // hoặc giá trị bạn muốn, nên chọn 20 cho hợp lý
-    }
-}
-if (player.getHP() <= 0)
-{
-    isRunning = false;
-    gameState = GameState::GameOver;
+        auto &enemyBullets = enemy->getBullets();
+        for (auto it = enemyBullets.begin(); it != enemyBullets.end();)
+        {
+            if (it->getBounds().intersects(player.getBounds()))
+            {
+                player.takeDamage(10);
+                it = enemyBullets.erase(it);
 
-    if (score > highScore)
-    {
-        highScore = score;
-        saveHighScore();
-        highScoreText.setString("High Score: " + std::to_string(highScore));
+                // Hiệu ứng khi player bị bắn trúng
+                std::cout << "Player bị enemy bắn trúng! HP: " << player.getHP() << std::endl;
+            }
+            else
+            {
+                ++it;
+            }
+        }
     }
-}
+
+    // Xóa enemy đã chết
+    enemies.erase(
+        std::remove_if(enemies.begin(), enemies.end(),
+                       [](const std::unique_ptr<Enemy> &e)
+                       { return e->shouldBeRemoved(); }),
+        enemies.end());
+
+    if (enemies.empty() && enemySpawnedCount >= enemyPerWave)
+    {
+        waveNumber++;
+        enemyPerWave += 2;
+        enemySpawnedCount = 0;
+        enemies.clear(); // <-- Thêm dòng này
+        waveText.setString("Wave: " + std::to_string(waveNumber));
+        player.setPosition(playerSpawnPosition); // Spawn theo spawn point
+        createMaze();
+    }
+
+    // Va chạm enemy với player
+    sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
+    for (auto &enemy : enemies)
+    {
+        if (enemy->isHit(playerBounds))
+        {
+            player.takeDamage(20); // hoặc giá trị bạn muốn, nên chọn 20 cho hợp lý
+        }
+    }
+    if (player.getHP() <= 0)
+    {
+        isRunning = false;
+        gameState = GameState::GameOver;
+
+        if (score > highScore)
+        {
+            highScore = score;
+            saveHighScore();
+            highScoreText.setString("High Score: " + std::to_string(highScore));
+        }
+    }
 }
 
 void Game::render()
