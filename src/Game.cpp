@@ -625,17 +625,17 @@ void Game::update(float dt)
         // Gán số lượng kẻ thù tổng cộng cho wave mới
         if (waveNumber == 2)
         {
-            enemyPerWave = 4; // Wave 2: 4 kẻ thù
+            enemyPerWave = 0; // Wave 2: 4 kẻ thù
             createMaze("assets/Maps/maze2.txt");
         }
         else if (waveNumber == 3)
         {
-            enemyPerWave = 5; // Wave 3: 5 kẻ thù
+            enemyPerWave = 0; // Wave 3: 5 kẻ thù
             createMaze("assets/Maps/maze3.txt");
         }
         else if (waveNumber == 4)
         {
-            enemyPerWave = 6; // Wave 4: 6 kẻ thù
+            enemyPerWave = 0; // Wave 4: 6 kẻ thù
             createMaze("assets/Maps/maze4.txt");
         }
         else if (waveNumber == 5)
@@ -647,7 +647,7 @@ void Game::update(float dt)
     }
 
     // Nếu ở wave 5 và giết đủ 10 enemy thì mở cổng
-    if (waveNumber == 5 && enemyKilledCount >= 10 && !gateActive)
+    if (waveNumber == 5 && enemyKilledCount >= 0 && !gateActive)
     {
         gateActive = true;
         sf::FloatRect gateBounds = exitGate.getLocalBounds();
