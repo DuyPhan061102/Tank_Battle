@@ -288,6 +288,8 @@ void Game::processEvents()
                     waveNumber = 1;
                     enemyPerWave = 3;
                     enemySpawnedCount = 0;
+                    enemyKilledCount = 0; // ✅ reset
+                    gateActive = false;   // ✅ reset
 
                     // Reset player
                     player = PlayerTank();
@@ -371,6 +373,8 @@ void Game::processEvents()
                     waveNumber = 1;
                     enemyPerWave = 3;
                     enemySpawnedCount = 0;
+                    enemyKilledCount = 0; // ✅ reset
+                    gateActive = false;   // ✅ reset
 
                     // 👉 Thêm các dòng sau để khởi tạo lại player và map:
                     player = PlayerTank();
@@ -515,7 +519,8 @@ void Game::update(float dt)
         return;
     }
 
-    if (!isRunning) return;
+    if (!isRunning)
+        return;
 
     waveText.setString("Wave: " + std::to_string(waveNumber));
     player.update(dt);
@@ -523,7 +528,8 @@ void Game::update(float dt)
     // Xóa tường đã bị phá
     walls.erase(
         std::remove_if(walls.begin(), walls.end(),
-                       [](const Wall &w) { return w.isDestroyed(); }),
+                       [](const Wall &w)
+                       { return w.isDestroyed(); }),
         walls.end());
 
     // Kiểm tra máu player
@@ -559,7 +565,8 @@ void Game::update(float dt)
         bullet.update(dt);
 
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
-                                 [this](const Bullet &b) { return b.isOffScreen(window); }),
+                                 [this](const Bullet &b)
+                                 { return b.isOffScreen(window); }),
                   bullets.end());
 
     // Xử lý va chạm đạn <-> enemy
@@ -569,7 +576,8 @@ void Game::update(float dt)
         bool bulletErased = false;
         for (auto &enemy : enemies)
         {
-            if (enemy->getHP() <= 0) continue;
+            if (enemy->getHP() <= 0)
+                continue;
             if (enemy->isHit(b->getBounds()))
             {
                 enemy->takeDamage(1);
@@ -601,29 +609,41 @@ void Game::update(float dt)
     // Xóa enemy đã chết
     enemies.erase(
         std::remove_if(enemies.begin(), enemies.end(),
-                       [](const std::unique_ptr<Enemy> &e) { return e->shouldBeRemoved(); }),
+                       [](const std::unique_ptr<Enemy> &e)
+                       { return e->shouldBeRemoved(); }),
         enemies.end());
 
+    // Chuyển wave nếu chưa phải wave 5
     // Chuyển wave nếu chưa phải wave 5
     if (enemies.empty() && enemySpawnedCount >= enemyPerWave && waveNumber < 5)
     {
         waveNumber++;
-        enemyPerWave += 2;
         enemySpawnedCount = 0;
         waveText.setString("Wave: " + std::to_string(waveNumber));
         player.setPosition(playerSpawnPosition);
 
-        if (waveNumber == 5)
+        // Gán số lượng kẻ thù tổng cộng cho wave mới
+        if (waveNumber == 2)
+        {
+            enemyPerWave = 4; // Wave 2: 4 kẻ thù
+            createMaze("assets/Maps/maze2.txt");
+        }
+        else if (waveNumber == 3)
+        {
+            enemyPerWave = 5; // Wave 3: 5 kẻ thù
+            createMaze("assets/Maps/maze3.txt");
+        }
+        else if (waveNumber == 4)
+        {
+            enemyPerWave = 6; // Wave 4: 6 kẻ thù
+            createMaze("assets/Maps/maze4.txt");
+        }
+        else if (waveNumber == 5)
         {
             enemyKilledCount = 0;
             createMaze("assets/Maps/maze5.txt");
+            // Ở wave 5, enemyPerWave không còn giới hạn
         }
-        else if (waveNumber == 2)
-            createMaze("assets/Maps/maze2.txt");
-        else if (waveNumber == 3)
-            createMaze("assets/Maps/maze3.txt");
-        else if (waveNumber == 4)
-            createMaze("assets/Maps/maze4.txt");
     }
 
     // Nếu ở wave 5 và giết đủ 10 enemy thì mở cổng
@@ -810,34 +830,42 @@ void Game::render()
 
 void Game::spawnEnemy()
 {
-    if (enemySpawnPoints.empty()) return;
+    if (enemySpawnPoints.empty())
+        return;
+
+    // Giới hạn số lượng spawn trong các wave < 5
+    if (waveNumber < 5 && enemySpawnedCount >= enemyPerWave)
+        return;
 
     std::vector<int> availableIndexes;
     for (int i = 0; i < enemySpawnCounts.size(); ++i)
     {
-        // Ở wave 5, bỏ qua giới hạn spawn, chỉ kiểm tra các điểm spawn hợp lệ.
-        // Ở các wave khác, giới hạn số kẻ thù tại mỗi điểm spawn.
+        // Ở wave 5, bỏ qua giới hạn spawn tại một điểm.
         if (waveNumber == 5 || enemySpawnCounts[i] < maxEnemiesPerSpawn)
             availableIndexes.push_back(i);
     }
-    
-    if (availableIndexes.empty()) return;
+
+    if (availableIndexes.empty())
+        return;
 
     int type = rand() % 10;
     int chosen = availableIndexes[rand() % availableIndexes.size()];
     sf::Vector2f spawnPos = enemySpawnPoints[chosen];
 
     std::unique_ptr<Enemy> enemy;
-    if (type < 5) enemy = std::make_unique<EnemyTank>(spawnPos.x, spawnPos.y);
-    else if (type < 9) enemy = std::make_unique<EnemyScout>(spawnPos.x, spawnPos.y);
-    else enemy = std::make_unique<EnemyBoss>(spawnPos.x, spawnPos.y);
+    if (type < 5)
+        enemy = std::make_unique<EnemyTank>(spawnPos.x, spawnPos.y);
+    else if (type < 9)
+        enemy = std::make_unique<EnemyScout>(spawnPos.x, spawnPos.y);
+    else
+        enemy = std::make_unique<EnemyBoss>(spawnPos.x, spawnPos.y);
 
     enemy->setSpeed(50.f * static_cast<float>(std::pow(1.35f, waveNumber)));
     enemies.push_back(std::move(enemy));
     enemySpawnCounts[chosen]++;
-    if (waveNumber < 5) enemySpawnedCount++;
+    if (waveNumber < 5)
+        enemySpawnedCount++;
 }
-
 
 
 void Game::loadHighScore()
