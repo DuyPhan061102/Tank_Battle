@@ -11,8 +11,8 @@ PlayerTank::PlayerTank()
     speed = 200.f;
     body.setFillColor(sf::Color::Green);
     body.setSize(sf::Vector2f(22.f, 22.f)); 
-    currentHealth = 100;
-    maxHealth = 100;
+    currentHealth = 200;
+    maxHealth = 200;
 
     if (!tankTexture.loadFromFile("assets/Images/tank1.png"))
         std::cout << "❌ Không thể tải player_tank.png\n";
