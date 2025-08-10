@@ -29,6 +29,7 @@ public:
     int getMaxHP() const;
     void heal(float ratio);
     int getHP() const;
+
     
     // Hàm bắn đạn thông minh
     bool hasLineOfSight(const sf::Vector2f &playerPos, const std::vector<Wall> &walls) const;
@@ -39,6 +40,7 @@ public:
     std::vector<Bullet>& getBullets() { return bullets; }
     const std::vector<Bullet>& getBullets() const { return bullets; }
     void setWindow(sf::RenderWindow* window) { windowPtr = window; }
+
 
 protected:
     sf::Texture tankTexture;

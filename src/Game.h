@@ -1,5 +1,6 @@
 //Game.h
 #pragma once
+#include <iostream>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include "PlayerTank.h"
@@ -24,11 +25,14 @@ enum class GameState
     MoreMenu,
     Tutorial,
     Volume,
+    Victory
 };
 
 class Game
 {
 private:
+    int currentWave = 1;
+    const int maxWave = 4;
     int waveNumber = 1;
     int enemyPerWave = 3;
     int enemySpawnedCount = 0;
@@ -125,7 +129,7 @@ private:
 
     sf::Text highScoreText;
     // layout map
-    void createMaze();
+    void createMaze(const std::string& mapFile);
     sf::Vector2f playerSpawnPosition = sf::Vector2f(100.f, 100.f); // tank spawn theo S
     sf::Vector2f player2SpawnPosition = { 600.f, 500.f };
     std::vector<sf::Vector2f> enemySpawnPoints; // Enemy spawn
@@ -148,6 +152,13 @@ private:
 
     void loadHighScore(); // đọc từ file
     void saveHighScore(); // ghi vào file
+
+    // Cổng thoát
+    sf::Sprite exitGate;
+    sf::Texture exitGateTexture;
+    bool gateActive = false;
+    int enemyKilledCount = 0;
+
 
 
 public:
