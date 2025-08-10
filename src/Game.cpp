@@ -288,8 +288,8 @@ void Game::processEvents()
                     player.setPosition(playerSpawnPosition);
                     player.resetHP();                  // <-- Thêm dòng này để hồi máu player
                     player.setTexture(&playerTexture); // <-- Thêm dòng này
-
-                    createMaze();
+                    // Load map wave 1
+                    createMaze("assets/Maps/maze1.txt");
                 }
                 else if (quitButton.getGlobalBounds().contains(mousePos))
                 {
@@ -371,7 +371,7 @@ void Game::processEvents()
                     player.resetHP();
                     player.setTexture(&playerTexture); // <-- Thêm dòng này
 
-                    createMaze();
+                    createMaze("assets/Maps/maze1.txt");
                 }
                 else if (returnButton.getGlobalBounds().contains(mousePos))
                 {
@@ -583,7 +583,10 @@ if (enemies.empty() && enemySpawnedCount >= enemyPerWave)
     enemies.clear(); // <-- Thêm dòng này
     waveText.setString("Wave: " + std::to_string(waveNumber));
     player.setPosition(playerSpawnPosition); // Spawn theo spawn point
-    createMaze();
+    // Load map tương ứng wave
+    if (waveNumber == 2) createMaze("assets/Maps/maze2.txt");
+    else if (waveNumber == 3) createMaze("assets/Maps/maze3.txt");
+    else if (waveNumber == 4) createMaze("assets/Maps/maze4.txt");
 }
 
 // Va chạm enemy với player
@@ -790,12 +793,10 @@ void Game::saveHighScore()
         file.close();
     }
 }
-void Game::createMaze()
-{
-    std::ifstream file("assets/Maps/maze.txt");
-    if (!file.is_open())
-    {
-        std::cerr << "❌ Không thể mở maze.txt\n";
+void Game::createMaze(const std::string& mapFile) {
+    std::ifstream file(mapFile);
+    if (!file.is_open()) {
+        std::cerr << "❌ Không thể mở " << mapFile << "\n";
         return;
     }
 
@@ -807,51 +808,37 @@ void Game::createMaze()
     int row = 0;
     const int tileSize = 40;
 
-    // 🔸 Làm tường nhỏ hơn tileSize
-    const float wallSizeRatio = 0.75f; // 👈 Giảm kích thước (có thể điều chỉnh: 0.5f, 0.7f,...)
-    const sf::Vector2f wallSize(tileSize * wallSizeRatio, tileSize * wallSizeRatio);
-    const sf::Vector2f wallOffset((tileSize - wallSize.x) / 2.f, (tileSize - wallSize.y) / 2.f);
-
-    while (std::getline(file, line))
-    {
-        for (int col = 0; col < line.size(); ++col)
-        {
+    while (std::getline(file, line)) {
+        for (int col = 0; col < line.size(); ++col) {
             char ch = line[col];
             sf::Vector2f pos(col * tileSize, row * tileSize);
 
-            switch (ch)
-            {
-            case '#':
-            {
-                Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 15);
-                w.setTexture(&wallTexture); // Gán ảnh cho tường thường
+            switch (ch) {
+            case '#': {
+                Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 10);
+                w.setTexture(&wallTexture);
                 walls.push_back(w);
                 break;
             }
-            case '@':
-            {
-                Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 99999);
-                w.setTexture(&strongWallTexture); // Gán ảnh cho tường bền
+            case '@': {
+                Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 999999);
+                w.setTexture(&strongWallTexture);
                 walls.push_back(w);
                 break;
             }
-
             case 'S':
                 playerSpawnPosition = pos;
                 break;
             case 'E':
-                enemySpawnPoints.push_back(pos);
-                enemySpawnCounts.push_back(0);
-                break;
-            case '.':
-                break;
-            default:
+                if (enemySpawnPoints.size() < 5) {
+                    enemySpawnPoints.push_back(pos);
+                    enemySpawnCounts.push_back(0);
+                }
                 break;
             }
         }
         row++;
     }
-
     file.close();
 
     player.setWalls(&walls);

@@ -27,7 +27,7 @@ public:
     virtual bool isBoss() const { return false; }
     int getMaxHP() const;
     void heal(float ratio);
-    int Enemy::getHP() const;
+    int getHP() const;
 protected:
     sf::Texture tankTexture;
     sf::Sprite tankSprite;

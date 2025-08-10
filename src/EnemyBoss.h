@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #include "Enemy.h"
 
 class EnemyBoss : public Enemy
