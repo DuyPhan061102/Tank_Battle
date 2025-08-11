@@ -29,7 +29,7 @@ Player2Tank::Player2Tank() {
     healthBarFront.setFillColor(sf::Color::Cyan); 
 
     if (!explosionTexture.loadFromFile("assets/Images/explosion2.png"))
-        std::cout << "? Không th? t?i explosion2.png\n";
+        std::cout << "? Khï¿½ng th? t?i explosion2.png\n";
 }
 
 void Player2Tank::handleInput() {
@@ -79,14 +79,14 @@ void Player2Tank::update(float deltaTime) {
     for (auto& bullet : bullets) {
         bullet.update(deltaTime);
     }
-    // X? l? va ch?m ð?n <-> tý?ng
+    // X? l? va ch?m ï¿½?n <-> tï¿½?ng
     for (auto it = bullets.begin(); it != bullets.end(); ) {
         bool hitWall = false;
 
         if (wallsPtr) {
             for (Wall& wall : *wallsPtr) {
                 if (wall.getBounds().intersects(it->getBounds())) {
-                    wall.takeDamage();  // Tãng hitCount
+                    wall.takeDamage();  // Tï¿½ng hitCount
                     hitWall = true;
                     break;
                 }
@@ -94,21 +94,21 @@ void Player2Tank::update(float deltaTime) {
         }
 
         if (hitWall) {
-            it = bullets.erase(it);  // Xóa ð?n sau khi b?n tý?ng
+            it = bullets.erase(it);  // Xï¿½a ï¿½?n sau khi b?n tï¿½?ng
         }
         else {
             ++it;
         }
     }
 
-    // Xóa ð?n n?u ra kh?i màn h?nh
+    // Xï¿½a ï¿½?n n?u ra kh?i mï¿½n h?nh
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
         [](const Bullet& b) {
             sf::Vector2f pos = b.getPosition();
             return pos.x < 0 || pos.x > 800 || pos.y < 0 || pos.y > 600;
         }), bullets.end());
 
-    // Xoá tý?ng ð? b? phá (hitCount >= 3)
+    // Xoï¿½ tï¿½?ng ï¿½? b? phï¿½ (hitCount >= 3)
     if (wallsPtr) {
         wallsPtr->erase(
             std::remove_if(wallsPtr->begin(), wallsPtr->end(),
@@ -119,7 +119,7 @@ void Player2Tank::update(float deltaTime) {
     if (isExploding)
     {
         explosionTimer += deltaTime;
-        if (explosionTimer > 0.4f) // hi?u ?ng n? 0.4 giây
+        if (explosionTimer > 0.4f) // hi?u ?ng n? 0.4 giï¿½y
             isExploding = false;
         return;
     }

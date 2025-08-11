@@ -5,6 +5,7 @@
 #include <SFML/Audio.hpp>
 #include "PlayerTank.h"
 #include "Player2Tank.h"
+#include "HighScoreManager.h"
 #include "Tank.h"
 #include "Enemy.h"
 #include "Bullet.h"
@@ -25,7 +26,8 @@ enum class GameState
     MoreMenu,
     Tutorial,
     Volume,
-    Victory
+    Victory,
+    HighScoreMenu
 };
 
 class Game
@@ -55,7 +57,7 @@ private:
     std::vector<Bullet> bullets;
     PlayerTank player;
     Player2Tank player2;
-    
+
     sf::Texture playerTexture;
 
     // ảnh nền
@@ -75,7 +77,6 @@ private:
     sf::Text gameTitle;
     sf::Text scoreText1;
     sf::Text scoreText2;
-
 
     // Các nút menu và game over va pvsp
     sf::Text playButton;
@@ -126,7 +127,7 @@ private:
     sf::Sound explosionSound;
 
     // Điểm cao nhất
-
+    HighScoreManager highscoreManager;
     sf::Text highScoreText;
     // layout map
     void createMaze(const std::string& mapFile);
@@ -143,15 +144,12 @@ private:
     // Điểm số
     int score = 0;
     int highScore = 0;
-    bool showHighScoreText = false;
     int p1score = 0;
     int p2score = 0;
-    
+
 
     sf::Music backgroundMusic; // cài nhạc nền
-
-    void loadHighScore(); // đọc từ file
-    void saveHighScore(); // ghi vào file
+    sf::Music menu_backgroundMusic;
 
     // Cổng thoát
     sf::Sprite exitGate;
@@ -177,8 +175,7 @@ private:
     void setupTutorial();
     void setupUIButtons();
     void setupAudio();
-    void setupButtonText(sf::Text& text, const std::string& str, unsigned int charSize);
     void updateMenuButtonHovers();
     void resetPvsPRound();
+    void setGameState(GameState newState);
 };
-

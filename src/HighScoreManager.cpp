@@ -62,7 +62,7 @@ void HighScoreManager::sortScores() {
 }
 
 void HighScoreManager::drawBox(sf::RenderWindow& window, sf::Font& font, sf::Vector2f pos) const {
-    sf::RectangleShape box(sf::Vector2f(400, 300));
+    sf::RectangleShape box(sf::Vector2f(500, 400));
     box.setPosition(pos);
     box.setFillColor(sf::Color(0, 0, 0, 180));
     box.setOutlineColor(sf::Color::White);
@@ -71,7 +71,7 @@ void HighScoreManager::drawBox(sf::RenderWindow& window, sf::Font& font, sf::Vec
 
     sf::Text title("HIGH SCORES", font, 28);
     title.setFillColor(sf::Color::Yellow);
-    title.setPosition(pos.x + 100, pos.y + 10);
+    title.setPosition(pos.x + 150, pos.y + 10);
     window.draw(title);
 
     float startY = pos.y + 60;
@@ -81,13 +81,13 @@ void HighScoreManager::drawBox(sf::RenderWindow& window, sf::Font& font, sf::Vec
             std::to_string(rank) + ". " +
             std::to_string(entry.score) + " - " +
             entry.dateTime,
-            font, 20
+            font, 30
         );
         text.setFillColor(sf::Color::White);
         text.setPosition(pos.x + 20, startY);
         window.draw(text);
 
-        startY += 40;
+        startY += 60;
         rank++;
     }
 }
