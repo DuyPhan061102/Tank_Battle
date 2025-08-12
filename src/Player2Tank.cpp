@@ -11,8 +11,8 @@ Player2Tank::Player2Tank() {
     speed = 200.f;
     body.setFillColor(sf::Color::Blue);
     body.setSize(sf::Vector2f(22.f, 22.f));
-    currentHealth = 100;
-    maxHealth = 100;
+    currentHealth = 200;
+    maxHealth = 200;
 
     if (!tankTexture.loadFromFile("assets/Images/tank2.png")) 
         std::cout << "Cannot load tank2.png\n";

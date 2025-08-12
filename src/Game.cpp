@@ -97,7 +97,7 @@ void Game::loadAssets()
     if (!playerTexture.loadFromFile("assets/Images/tank1.png"))
         std::cout << "❌ Không thể tải player_tank.png\n";
 
-    if (!exitGateTexture.loadFromFile("assets/Images/exit_gate.png"))
+    if (!exitGateTexture.loadFromFile("assets/Images/exit_gate2.png"))
     {
         std::cerr << "❌ Không thể load exit_gate.png\n";
     }
@@ -537,7 +537,7 @@ void Game::processEvents()
                             player2.resetHP();
                             player2.clearBullets();
 
-                            createMaze("assets/Maps/maze1.txt"); // Nên truyền map cho PvP nếu muốn map riêng
+                            createMaze("assets/Maps/maze3.txt"); // Nên truyền map cho PvP nếu muốn map riêng
                         }
                         else
                         {
