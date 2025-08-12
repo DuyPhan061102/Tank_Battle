@@ -13,7 +13,6 @@ PlayerTank::PlayerTank()
     body.setSize(sf::Vector2f(22.f, 22.f)); 
     currentHealth = 200;
     maxHealth = 200;
-
     if (!tankTexture.loadFromFile("assets/Images/tank1.png"))
         std::cout << "❌ Không thể tải player_tank.png\n";
     else
