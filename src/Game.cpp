@@ -892,7 +892,7 @@ void Game::processEvents()
         {
             if (enemy->isHit(playerBounds))
             {
-                player.takeDamage(20);
+                player.takeDamage(10);
             }
         }
 
