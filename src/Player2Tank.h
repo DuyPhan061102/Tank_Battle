@@ -33,6 +33,8 @@ public:
     void healByPercent(float percent);
     void clearBullets();
     void resetExplosion();
+    sf::FloatRect getBounds() const;
+
     
     
 private:

@@ -8,7 +8,7 @@
 
 
 Player2Tank::Player2Tank() {
-    speed = 200.f;
+    speed = 140.f;
     body.setFillColor(sf::Color::Blue);
     body.setSize(sf::Vector2f(22.f, 22.f));
     currentHealth = 200;
@@ -73,20 +73,24 @@ void Player2Tank::handleInput() {
 void Player2Tank::update(float deltaTime) {
     handleInput();
     move(movement.x * speed * deltaTime, movement.y * speed * deltaTime);
+    // Đồng bộ sprite với vị trí & góc quay của body
+    tankSprite.setPosition(body.getPosition());
+    tankSprite.setRotation(body.getRotation());
+
 
     updateHealthBar();
 
     for (auto& bullet : bullets) {
         bullet.update(deltaTime);
     }
-    // X? l? va ch?m �?n <-> t�?ng
+
     for (auto it = bullets.begin(); it != bullets.end(); ) {
         bool hitWall = false;
 
         if (wallsPtr) {
             for (Wall& wall : *wallsPtr) {
                 if (wall.getBounds().intersects(it->getBounds())) {
-                    wall.takeDamage();  // T�ng hitCount
+                    wall.takeDamage();  
                     hitWall = true;
                     break;
                 }
@@ -94,21 +98,19 @@ void Player2Tank::update(float deltaTime) {
         }
 
         if (hitWall) {
-            it = bullets.erase(it);  // X�a �?n sau khi b?n t�?ng
+            it = bullets.erase(it);  
         }
         else {
             ++it;
         }
     }
 
-    // X�a �?n n?u ra kh?i m�n h?nh
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
         [](const Bullet& b) {
             sf::Vector2f pos = b.getPosition();
             return pos.x < 0 || pos.x > 800 || pos.y < 0 || pos.y > 600;
         }), bullets.end());
 
-    // Xo� t�?ng �? b? ph� (hitCount >= 3)
     if (wallsPtr) {
         wallsPtr->erase(
             std::remove_if(wallsPtr->begin(), wallsPtr->end(),
@@ -119,7 +121,7 @@ void Player2Tank::update(float deltaTime) {
     if (isExploding)
     {
         explosionTimer += deltaTime;
-        if (explosionTimer > 0.4f) // hi?u ?ng n? 0.4 gi�y
+        if (explosionTimer > 0.4f)
             isExploding = false;
         return;
     }
@@ -250,7 +252,7 @@ void Player2Tank::updateHealthBar()
     float healthPercent = static_cast<float>(currentHealth) / maxHealth;
     healthBarFront.setSize(sf::Vector2f(100 * healthPercent, 10));
     sf::Vector2f tankPos = body.getPosition();
-    sf::Vector2f hpPos(tankPos.x - 25, tankPos.y - 20); // gi?m
+    sf::Vector2f hpPos(tankPos.x - 25, tankPos.y - 20); 
     healthBarBack.setPosition(hpPos);
     healthBarFront.setPosition(hpPos);
 }
@@ -262,4 +264,7 @@ void Player2Tank::resetExplosion()
 {
     isExploding = false;
     explosionTimer = 0.f;
+}
+sf::FloatRect Player2Tank::getBounds() const {
+    return tankSprite.getGlobalBounds(); // Dùng sprite để tính hitbox
 }

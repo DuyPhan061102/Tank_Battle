@@ -8,13 +8,16 @@
 
 PlayerTank::PlayerTank()
 {
-    speed = 200.f;
+    speed = 140.f;
+    // Hình chữ nhật mô tả thân xe nếu không có texture
     body.setFillColor(sf::Color::Green);
     body.setSize(sf::Vector2f(22.f, 22.f)); 
+    // HP
     currentHealth = 200;
     maxHealth = 200;
+    // Tải texture thân xe
     if (!tankTexture.loadFromFile("assets/Images/tank1.png"))
-        std::cout << "❌ Không thể tải player_tank.png\n";
+        std::cout << " Không thể tải player_tank.png\n";
     else
     {
         tankSprite.setTexture(tankTexture);
@@ -22,26 +25,27 @@ PlayerTank::PlayerTank()
         tankSprite.setPosition(body.getPosition());
         tankSprite.setScale(0.5f, 0.5f); 
     }
-
+    // Thanh máu nền (đỏ)
     healthBarBack.setSize(sf::Vector2f(100, 10));
     healthBarBack.setFillColor(sf::Color::Red);
     healthBarBack.setPosition(10, 10);
-
+    // Thanh máu hiện tại (xanh lá)
     healthBarFront.setSize(sf::Vector2f(100, 10));
     healthBarFront.setFillColor(sf::Color::Green);
     healthBarFront.setPosition(10, 10);
 
     // Khi player bị trúng đạn hoặc va chạm
     if (!explosionTexture.loadFromFile("assets/Images/explosion2.png"))
-        std::cout << "❌ Không thể tải explosion2.png\n";
-    // KHÔNG set isExploding, explosionSprite ở đây!
+        std::cout << " Không thể tải explosion2.png\n";
+    
 }
-
+// Xử lý input từ bàn phím
 void PlayerTank::handleInput()
 {
-    movement = {0.f, 0.f};
+    movement = {0.f, 0.f}; // Reset hướng
     float angle = body.getRotation();
 
+    // Điều khiển WASD
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
     {
         movement.y -= 1.f;
@@ -62,13 +66,13 @@ void PlayerTank::handleInput()
         movement.x += 1.f;
         angle = 0.f;
     }
-
+    // Nếu có di chuyển -> cập nhật góc quay theo vector movement
     if (movement.x != 0.f || movement.y != 0.f)
     {
         angle = std::atan2(movement.y, movement.x) * 180.f / 3.14159f;
         body.setRotation(angle);
     }
-
+    // Bắn đạn khi nhấn Space (chỉ bắn 1 viên mỗi lần nhấn)
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
     {
         if (!wasSpacePressedLastFrame)
@@ -82,7 +86,7 @@ void PlayerTank::handleInput()
         wasSpacePressedLastFrame = false;
     }
 }
-
+// Vẽ Player
 void PlayerTank::draw(sf::RenderWindow &window) const
 {
     if (isExploding)
@@ -95,13 +99,13 @@ void PlayerTank::draw(sf::RenderWindow &window) const
     } else {
         window.draw(body);
     }
-    drawHP(window);
+    drawHP(window); 
 
     for (const auto &b : bullets)
         b.draw(window);
 }
 
-//update move
+// Di chuyển và kiểm tra va chạm tường
 void PlayerTank::move(float dx, float dy)
 {
     sf::FloatRect bodyBounds = body.getGlobalBounds();
@@ -122,12 +126,17 @@ void PlayerTank::move(float dx, float dy)
     if (!collision)
         body.move(dx, dy);
 }
+// Cập nhật logic Player
 void PlayerTank::update(float deltaTime)
 {
-    handleInput();
+    handleInput(); // Xử lý điều khiển
 
     // Di chuyển theo input
     move(movement.x * speed * deltaTime, movement.y * speed * deltaTime);
+    // Đồng bộ sprite với vị trí & góc quay của body
+    tankSprite.setPosition(body.getPosition());
+    tankSprite.setRotation(body.getRotation());
+
 
     // Cập nhật thanh máu
     updateHealthBar();
@@ -136,7 +145,7 @@ void PlayerTank::update(float deltaTime)
     for (auto& b : bullets)
         b.update(deltaTime);
 
-    // Xử lý va chạm đạn <-> tường
+    // Xử lý va chạm đạn với tường
     for (auto it = bullets.begin(); it != bullets.end(); ) {
         bool hitWall = false;
 
@@ -171,7 +180,7 @@ void PlayerTank::update(float deltaTime)
                            [](const Wall &wall) { return wall.isDestroyed(); }),
             wallsPtr->end());
     }
-
+    // Xử lý hiệu ứng nổ
     if (isExploding)
     {
         explosionTimer += deltaTime;
@@ -183,11 +192,13 @@ void PlayerTank::update(float deltaTime)
 
 sf::Sound *shootSoundPtr = nullptr;
 
+// Gán âm thanh bắn
 void PlayerTank::setShootSound(sf::Sound *sound)
 {
     shootSoundPtr = sound;
 }
 
+// Bắn đạn
 void PlayerTank::shoot()
 {
     float rotation = body.getRotation();
@@ -204,13 +215,14 @@ void PlayerTank::shoot()
     if (shootSoundPtr)
         shootSoundPtr->play();
 }
+// Nhận sát thương
 void PlayerTank::takeDamage(int damage)
 {
     currentHealth -= damage;
     if (currentHealth < 0)
         currentHealth = 0;
 
-    // Kích hoạt hiệu ứng nổ mỗi lần mất máu
+    // Kích hoạt hiệu ứng nổ mỗi lần HP = 0;
     if (currentHealth == 0 && explosionTexture.getSize().x > 0) {
         explosionSprite.setTexture(explosionTexture);
         explosionSprite.setOrigin(explosionTexture.getSize().x / 2.f, explosionTexture.getSize().y / 2.f);
@@ -220,17 +232,18 @@ void PlayerTank::takeDamage(int damage)
     }
 }
 
+// Lấy HP
 int PlayerTank::getHP() const
 {
     return currentHealth;
 }
-
+// Vẽ thanh máu
 void PlayerTank::drawHP(sf::RenderWindow &window) const
 {
     window.draw(healthBarBack);
     window.draw(healthBarFront);
 }
-
+// Cập nhật thanh máu
 void PlayerTank::updateHealthBar()
 {
     float healthPercent = static_cast<float>(currentHealth) / maxHealth;
@@ -240,7 +253,7 @@ void PlayerTank::updateHealthBar()
     healthBarBack.setPosition(hpPos);
     healthBarFront.setPosition(hpPos);
 }
-
+// Các hàm tiện ích khác
 void PlayerTank::setWindow(sf::RenderWindow *window)
 {
     windowPtr = window;
@@ -298,3 +311,6 @@ void PlayerTank::clearBullets()
 }
 
 
+sf::FloatRect PlayerTank::getBounds() const {
+    return tankSprite.getGlobalBounds(); // Lấy khung va chạm dựa trên sprite
+}

@@ -183,7 +183,7 @@ void Enemy::draw(sf::RenderWindow &window) const
 bool Enemy::isHit(const sf::FloatRect &bounds)
 {
     // Nếu là va chạm với đạn (không phải player), luôn trừ máu
-    if (body.getGlobalBounds().intersects(bounds))
+    if (getBounds().intersects(bounds))
     {
         std::cout << "Enemy hit! HP: " << hp << std::endl;
         takeDamage(1);
@@ -362,4 +362,8 @@ void Enemy::smartShoot(const sf::Vector2f &playerPos, const std::vector<Wall> &w
 
         std::cout << "Enemy bắn đạn về phía player!\n";
     }
+}
+
+sf::FloatRect Enemy::getBounds() const {
+    return tankSprite.getGlobalBounds(); // dùng sprite làm hitbox
 }

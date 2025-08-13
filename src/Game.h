@@ -11,7 +11,7 @@
 #include "Bullet.h"
 #include <vector>
 #include <cmath>
-#include <fstream> // để đọc/ghi file
+#include <fstream> 
 #include <memory>
 
 #include "Wall.h"

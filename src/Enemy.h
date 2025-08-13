@@ -40,6 +40,7 @@ public:
     std::vector<Bullet>& getBullets() { return bullets; }
     const std::vector<Bullet>& getBullets() const { return bullets; }
     void setWindow(sf::RenderWindow* window) { windowPtr = window; }
+    sf::FloatRect getBounds() const;
 
 
 protected:
