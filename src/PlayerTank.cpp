@@ -14,7 +14,7 @@ PlayerTank::PlayerTank()
     currentHealth = 200;
     maxHealth = 200;
     if (!tankTexture.loadFromFile("assets/Images/tank1.png"))
-        std::cout << "❌ Không thể tải player_tank.png\n";
+        std::cout << "Không thể tải player_tank.png\n";
     else
     {
         tankSprite.setTexture(tankTexture);
@@ -33,8 +33,7 @@ PlayerTank::PlayerTank()
 
     // Khi player bị trúng đạn hoặc va chạm
     if (!explosionTexture.loadFromFile("assets/Images/explosion2.png"))
-        std::cout << "❌ Không thể tải explosion2.png\n";
-    // KHÔNG set isExploding, explosionSprite ở đây!
+        std::cout << "Không thể tải explosion2.png\n";
 }
 
 void PlayerTank::handleInput()

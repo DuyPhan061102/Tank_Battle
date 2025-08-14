@@ -8,7 +8,7 @@ EnemyBoss::EnemyBoss(float x, float y) : Enemy(x, y, 30)
 
     // Thay ảnh riêng cho EnemyBoss
     if (!tankTexture.loadFromFile("assets/Images/tank5.png"))
-        std::cout << "❌ Không thể tải boss.png\n";
+        std::cout << "Không thể tải boss.png\n";
     else
     {
         tankSprite.setTexture(tankTexture);

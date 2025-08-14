@@ -11,7 +11,7 @@
 #include "Bullet.h"
 #include <vector>
 #include <cmath>
-#include <fstream> // để đọc/ghi file
+#include <fstream>
 #include <memory>
 
 #include "Wall.h"
@@ -107,8 +107,8 @@ private:
     // Menu tutorial
     sf::RectangleShape tutorialBox;
     sf::Text tutorialText;
-    sf::Sprite wasdSprite, spaceSprite, escSprite;
-    sf::Texture wasdTexture, spaceTexture, escTexture;
+    sf::Sprite wasdSprite, spaceSprite,arrowsSprite, enterSprite;
+    sf::Texture wasdTexture, spaceTexture, arrowsTexture, enterTexture;
 
     // Volume menu
     sf::RectangleShape musicButton;

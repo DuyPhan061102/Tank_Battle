@@ -14,7 +14,7 @@ public:
 
 private:
     sf::RectangleShape shape;
-    const sf::Texture* texture = nullptr;  // 👍 Chỉ giữ con trỏ, không lưu ảnh
+    const sf::Texture* texture = nullptr;  
     int maxHit;
     int hitCount = 0;
 };

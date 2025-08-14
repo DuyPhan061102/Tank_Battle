@@ -109,7 +109,7 @@ void Enemy::update(float deltaTime, const std::vector<Wall> &walls, const sf::Ve
         timeSinceDirectionChange = 0.f;
     }
 
-    // ⏱ Sau khi trúng đạn thì chờ 0.2s rồi đánh dấu xoá
+    // Sau khi trúng đạn thì chờ 0.2s rồi đánh dấu xoá
     if (isHitEffect && hitClock.getElapsedTime().asSeconds() > 0.2f)
     {
         isHitEffect = false;

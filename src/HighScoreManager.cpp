@@ -81,7 +81,7 @@ void HighScoreManager::drawBox(sf::RenderWindow& window, sf::Font& font, sf::Vec
             std::to_string(rank) + ". " +
             std::to_string(entry.score) + " - " +
             entry.dateTime,
-            font, 30
+            font, 28.5
         );
         text.setFillColor(sf::Color::White);
         text.setPosition(pos.x + 20, startY);

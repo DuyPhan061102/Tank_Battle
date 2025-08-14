@@ -5,7 +5,7 @@ EnemyTank::EnemyTank(float x, float y) : Enemy(x, y, 8)
 {
     // Thay ảnh riêng cho EnemyTank
     if (!tankTexture.loadFromFile("assets/Images/tank3.png"))
-        std::cout << "❌ Không thể tải tank2.png\n";
+        std::cout << "Không thể tải tank2.png\n";
     else
     {
         tankSprite.setTexture(tankTexture);

@@ -9,7 +9,6 @@ Tank::Tank()
     speed = 100.f;
 }
 
-// ❌ Không cần hàm move vì nó là pure virtual và do lớp con định nghĩa
 
 void Tank::draw(sf::RenderWindow &window) const {
     window.draw(body);

@@ -40,7 +40,6 @@ Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), gameState(GameSta
     setupTutorial();
     setupUIButtons();
     setupAudio();
-    setGameState(GameState::Menu);
 }
 
 void Game::setGameState(GameState newState)
@@ -71,13 +70,13 @@ void Game::setGameState(GameState newState)
 void Game::loadAssets()
 {
     if (!backgroundTexture.loadFromFile("assets/Images/background.jpg"))
-        std::cout << "❌ Không thể tải background.jpg\n";
+        std::cout << "Không thể tải background.jpg\n";
 
     if (!menuBackgroundTexture.loadFromFile("assets/Images/menu_background.jpg"))
-        std::cout << "❌ Không thể tải menu_background.jpg\n";
+        std::cout << "Không thể tải menu_background.jpg\n";
 
     if (!font.loadFromFile("assets/Fonts/Orbitron-Regular.ttf"))
-        std::cout << "❌ Không thể tải font Roboto-Regular.ttf\n";
+        std::cout << "Không thể tải font Roboto-Regular.ttf\n";
 
     if (!wasdTexture.loadFromFile("assets/Images/key_wasd.png"))
         std::cout << "Không thể tải ảnh WASD\n";
@@ -85,21 +84,24 @@ void Game::loadAssets()
     if (!spaceTexture.loadFromFile("assets/Images/key_space.png"))
         std::cout << "Không thể tải ảnh SPACE\n";
 
-    if (!escTexture.loadFromFile("assets/Images/key_esc.png"))
-        std::cout << "Không thể tải ảnh ESC\n";
-
     if (!wallTexture.loadFromFile("assets/Images/wall.png"))
-        std::cout << "❌ Không thể tải wall.png\n";
+        std::cout << "Không thể tải wall.png\n";
 
     if (!strongWallTexture.loadFromFile("assets/Images/strong_wall.png"))
-        std::cout << "❌ Không thể tải strong_wall.png\n";
+        std::cout << "Không thể tải strong_wall.png\n";
 
     if (!playerTexture.loadFromFile("assets/Images/tank1.png"))
-        std::cout << "❌ Không thể tải player_tank.png\n";
+        std::cout << "Không thể tải player_tank.png\n";
+
+    if (!arrowsTexture.loadFromFile("assets/Images/arrowkeys.png"))
+        std::cout << "Không thể tải ảnh ARROW KEYS\n";
+
+    if (!enterTexture.loadFromFile("assets/Images/enterkey.png"))
+        std::cout << "Không thể tải ảnh ENTER KEY\n";
 
     if (!exitGateTexture.loadFromFile("assets/Images/exit_gate.png"))
     {
-        std::cerr << "❌ Không thể load exit_gate.png\n";
+        std::cerr << "Không thể load exit_gate.png\n";
     }
     else
     {
@@ -124,12 +126,20 @@ void Game::setupBackgrounds()
 void Game::setupTutorial()
 {
     wasdSprite.setTexture(wasdTexture);
-    wasdSprite.setPosition(60.f, 250.f);
+    wasdSprite.setPosition(60.f, 200.f);
     wasdSprite.setScale(0.7f, 0.7f);
 
     spaceSprite.setTexture(spaceTexture);
-    spaceSprite.setPosition(400.f, 320.f);
+    spaceSprite.setPosition(330.f, 330.f);
     spaceSprite.setScale(0.3f, 0.3f);
+
+    arrowsSprite.setTexture(arrowsTexture);
+    arrowsSprite.setPosition(85.f, 350.f);
+    arrowsSprite.setScale(0.4f, 0.4f);
+
+    enterSprite.setTexture(enterTexture);
+    enterSprite.setPosition(560.f, 260.f);
+    enterSprite.setScale(0.35f, 0.35f);
 
     tutorialBox.setSize(sf::Vector2f(700.f, 450.f));
     tutorialBox.setFillColor(sf::Color(100, 100, 100, 200));
@@ -138,9 +148,9 @@ void Game::setupTutorial()
     tutorialBox.setPosition(50.f, 75.f);
 
     tutorialText.setFont(font);
-    tutorialText.setCharacterSize(30);
+    tutorialText.setCharacterSize(23);
     tutorialText.setFillColor(sf::Color::White);
-    tutorialText.setString("Instructions:\n\n- Use W / A / S / D to move the tank.\n- Press SPACE to shoot.");
+    tutorialText.setString("Instructions:\n\n- Player 1: W/A/S/D to move the tank.\n- Player 2: Up/Down/Right/Left to move the tank. \n- Press Space (P1) / Enter (P2) to shoot.");
     tutorialText.setPosition(80.f, 100.f);
 }
 
@@ -277,12 +287,12 @@ void Game::setupUIButtons()
 void Game::setupAudio()
 {
     if (!clickBuffer.loadFromFile("assets/Sounds/click.wav"))
-        std::cout << "❌ Không thể tải click.wav\n";
+        std::cout << "Không thể tải click.wav\n";
     else
         clickSound.setBuffer(clickBuffer);
 
     if (!shootBuffer.loadFromFile("assets/Sounds/shoot.wav"))
-        std::cout << "❌ Không thể tải file shoot.wav\n";
+        std::cout << "Không thể tải file shoot.wav\n";
     else
     {
         shootSound.setBuffer(shootBuffer);
@@ -290,7 +300,7 @@ void Game::setupAudio()
     }
 
     if (!explosionBuffer.loadFromFile("assets/Sounds/explosion.wav"))
-        std::cout << "❌ Không thể tải file explosion.wav\n";
+        std::cout << "Không thể tải file explosion.wav\n";
     else
     {
         explosionSound.setBuffer(explosionBuffer);
@@ -298,7 +308,7 @@ void Game::setupAudio()
     }
     if (!backgroundMusic.openFromFile("assets/Sounds/background.ogg"))
     {
-        std::cout << "❌ Không thể mở background.ogg\n";
+        std::cout << "Không thể mở background.ogg\n";
     }
     else
     {
@@ -307,7 +317,7 @@ void Game::setupAudio()
     }
     if (!menu_backgroundMusic.openFromFile("assets/Sounds/menu_music.ogg"))
     {
-        std::cout << "❌ Không thể mở menu_music.ogg\n";
+        std::cout << "Không thể mở menu_music.ogg\n";
     }
     else
     {
@@ -334,16 +344,7 @@ void Game::processEvents()
     {
         if (event.type == sf::Event::Closed)
             window.close();
-        if (event.type == sf::Event::KeyPressed)
-        {
-            if (event.key.code == sf::Keyboard::X)
-            {
-                isRunning = false;           // Dừng gameplay
-                gameState = GameState::Victory; // Chuyển sang màn hình Victory
-            }
-        }
-
-
+        
         if (event.type == sf::Event::MouseButtonPressed)
         {
             sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
@@ -362,8 +363,8 @@ void Game::processEvents()
                     waveNumber = 1;
                     enemyPerWave = 2;
                     enemySpawnedCount = 0;
-                    enemyKilledCount = 0; // ✅ reset
-                    gateActive = false;   // ✅ reset
+                    enemyKilledCount = 0; // reset
+                    gateActive = false;   // reset
 
                     // Reset player
                     player = PlayerTank();
@@ -537,7 +538,7 @@ void Game::processEvents()
                             player2.resetHP();
                             player2.clearBullets();
 
-                            createMaze("assets/Maps/maze1.txt"); // Nên truyền map cho PvP nếu muốn map riêng
+                            createMaze("assets/Maps/maze1.txt"); 
                         }
                         else
                         {
@@ -545,8 +546,8 @@ void Game::processEvents()
                             waveNumber = 1;
                             enemyPerWave = 2;
                             enemySpawnedCount = 0;
-                            enemyKilledCount = 0; // ✅ reset
-                            gateActive = false;   // ✅ reset
+                            enemyKilledCount = 0; // reset
+                            gateActive = false;   // reset
                             score = 0;
                             scoreText.setString("Score: 0");
                             bullets.clear();
@@ -1143,9 +1144,10 @@ void Game::processEvents()
             window.draw(tutorialText);
             window.draw(wasdSprite);
             window.draw(spaceSprite);
-            window.draw(escSprite);
             window.draw(backButtonBox);
             window.draw(backButton);
+            window.draw(arrowsSprite);
+            window.draw(enterSprite);
         }
         else if (gameState == GameState::Volume)
         {
@@ -1205,7 +1207,7 @@ void Game::processEvents()
         std::ifstream file(mapFile);
         if (!file.is_open())
         {
-            std::cerr << "❌ Không thể mở " << mapFile << "\n";
+            std::cerr << "Không thể mở " << mapFile << "\n";
             return;
         }
 

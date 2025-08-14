@@ -4,7 +4,7 @@ EnemyScout::EnemyScout(float x, float y) : Enemy(x, y, 3)
 {
     // Thay ảnh riêng cho EnemyScout
     if (!tankTexture.loadFromFile("assets/Images/tank4.png"))
-        std::cout << "❌ Không thể tải scout.png\n";
+        std::cout << "Không thể tải scout.png\n";
     else
     {
         tankSprite.setTexture(tankTexture);
