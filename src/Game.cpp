@@ -977,7 +977,14 @@ void Game::processEvents()
         {
             if (enemy->isHit(playerBounds))
             {
-                player.takeDamage(10);
+                if (dynamic_cast<EnemyScout*>(enemy.get()))
+                {
+                    player.takeDamage(20); // scout gây sát thương cao hơn
+                }
+                else
+                {
+                    player.takeDamage(10); // Sát thương mặc định
+                }
             }
         }
 
