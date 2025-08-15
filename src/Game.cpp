@@ -8,7 +8,7 @@
 #include "EnemyScout.h"
 #include "EnemyBoss.h"
 
-Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle", sf::Style::Fullscreen), gameState(GameState::Menu), isRunning(true), isFullscreen(true)
+Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), gameState(GameState::Menu), isRunning(true), isFullscreen(true)
 {
     // Cài đặt vị trí và thuộc tính Player
     player.setPosition(playerSpawnPosition);
@@ -428,19 +428,6 @@ void Game::processEvents()
         if (event.type == sf::Event::Closed)
             window.close();
         
-        // Nhấn F11 để chuyển sang qua lại giữa Fullscreen và Windowed
-        if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::F11) {
-            isFullscreen = !isFullscreen;
-            window.close();
-
-            if (isFullscreen) {
-                window.create(sf::VideoMode(800, 600), "Tank Battle", sf::Style::Fullscreen);
-            }
-            else {
-                window.create(sf::VideoMode(800, 600), "Tank Battle", sf::Style::Default);
-            }
-        }
-
         //  Xử lý khi nhấn chuột trái (MouseButtonPressed)
         if (event.type == sf::Event::MouseButtonPressed)
         {
