@@ -8,7 +8,7 @@
 #include "EnemyScout.h"
 #include "EnemyBoss.h"
 
-Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), gameState(GameState::Menu), isRunning(true)
+Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle", sf::Style::Fullscreen), gameState(GameState::Menu), isRunning(true), isFullscreen(true)
 {
     // Cài đặt vị trí và thuộc tính Player
     player.setPosition(playerSpawnPosition);
@@ -90,6 +90,9 @@ void Game::loadAssets()
     if (!menuBackgroundTexture.loadFromFile("assets/Images/menu3.jpg"))
         std::cout << "Không thể tải menu3.jpg\n";
 
+    if (!menuBackgroundTexture2.loadFromFile("assets/Images/menu.jpg"))
+        std::cout << "Không thể tải menu.jpg\n";
+
     if (!font.loadFromFile("assets/Fonts/Orbitron-Regular.ttf"))
         std::cout << "Không thể tải font Roboto-Regular.ttf\n";
 
@@ -138,6 +141,11 @@ void Game::setupBackgrounds()
     menuBackgroundSprite.setScale(
         window.getSize().x / menuBackgroundSprite.getLocalBounds().width,
         window.getSize().y / menuBackgroundSprite.getLocalBounds().height);
+
+    menuBackgroundSprite2.setTexture(menuBackgroundTexture2);
+    menuBackgroundSprite2.setScale(
+        window.getSize().x / menuBackgroundSprite2.getLocalBounds().width,
+        window.getSize().y / menuBackgroundSprite2.getLocalBounds().height);
 }
 
 void Game::setupTutorial()
@@ -419,6 +427,20 @@ void Game::processEvents()
         //  Đóng cửa sổ khi bấm nút X
         if (event.type == sf::Event::Closed)
             window.close();
+        
+        // Nhấn F11 để chuyển sang qua lại giữa Fullscreen và Windowed
+        if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::F11) {
+            isFullscreen = !isFullscreen;
+            window.close();
+
+            if (isFullscreen) {
+                window.create(sf::VideoMode(800, 600), "Tank Battle", sf::Style::Fullscreen);
+            }
+            else {
+                window.create(sf::VideoMode(800, 600), "Tank Battle", sf::Style::Default);
+            }
+        }
+
         //  Xử lý khi nhấn chuột trái (MouseButtonPressed)
         if (event.type == sf::Event::MouseButtonPressed)
         {
@@ -1183,7 +1205,7 @@ void Game::processEvents()
         }
         else if (gameState == GameState::Victory)
         {
-            window.draw(menuBackgroundSprite); // Nền menu khi thắng
+            window.draw(menuBackgroundSprite2); // Nền menu khi thắng
 
             // Tạo text thông báo thắng
             sf::Text victoryText;
@@ -1238,7 +1260,7 @@ void Game::processEvents()
         }
         else if (gameState == GameState::MoreMenu)
         {
-            window.draw(menuBackgroundSprite); // Nền menu phụ
+            window.draw(menuBackgroundSprite2); // Nền menu phụ
 
             // Xử lý hover cho các nút
             handleHover(tutorialButton, tutorialButtonBox);
@@ -1256,7 +1278,7 @@ void Game::processEvents()
         }
         else if (gameState == GameState::HighScoreMenu)
         {
-            window.draw(menuBackgroundSprite); 
+            window.draw(menuBackgroundSprite2); 
             highscoreManager.drawBox(window, font, { 150, 100 }); // Vẽ bảng điểm cao
             // Nút BACK
             handleHover(backButton, backButtonBox);
@@ -1265,7 +1287,7 @@ void Game::processEvents()
             }
         else if (gameState == GameState::GameOver)
         {
-            window.draw(menuBackgroundSprite);
+            window.draw(menuBackgroundSprite2);
             window.draw(gameOverText);
             // Chỉ hiển thị điểm khi không phải PvP
             if (lastGameState != GameState::PvsP) {
@@ -1286,7 +1308,7 @@ void Game::processEvents()
         else if (gameState == GameState::Tutorial)
         {
             handleHover(backButton, backButtonBox);
-            window.draw(menuBackgroundSprite);
+            window.draw(menuBackgroundSprite2);
             window.draw(tutorialBox);
             window.draw(tutorialText);
             window.draw(wasdSprite);
@@ -1298,7 +1320,7 @@ void Game::processEvents()
         }
         else if (gameState == GameState::Volume)
         {
-            window.draw(menuBackgroundSprite);
+            window.draw(menuBackgroundSprite2);
             window.draw(musicButton);
             window.draw(musicText);
             window.draw(sfxButton);

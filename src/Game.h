@@ -45,6 +45,8 @@ private:
     GameState lastGameState;
     GameState gameState;     // trạng thái hiện tại của game
     bool isRunning;
+    bool isFullscreen = true; 
+
     // tường 
     std::vector<Wall> walls;
     // ảnh tường
@@ -63,10 +65,13 @@ private:
     // ảnh nền
     sf::Texture backgroundTexture; // ảnh nền
     sf::Sprite backgroundSprite;   // sprite để vẽ ảnh
+    
 
     // ảnh menu
     sf::Texture menuBackgroundTexture; // ảnh nền menu
     sf::Sprite menuBackgroundSprite;
+    sf::Texture menuBackgroundTexture2;
+    sf::Sprite menuBackgroundSprite2;
 
     // Font và văn bản
     sf::Font font;
