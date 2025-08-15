@@ -87,8 +87,8 @@ void Game::loadAssets()
     if (!backgroundTexture.loadFromFile("assets/Images/background2.jpg"))
         std::cout << "Không thể tải background.jpg\n";
 
-    if (!menuBackgroundTexture.loadFromFile("assets/Images/menu_background.jpg"))
-        std::cout << "Không thể tải menu_background.jpg\n";
+    if (!menuBackgroundTexture.loadFromFile("assets/Images/menu3.jpg"))
+        std::cout << "Không thể tải menu3.jpg\n";
 
     if (!font.loadFromFile("assets/Fonts/Orbitron-Regular.ttf"))
         std::cout << "Không thể tải font Roboto-Regular.ttf\n";
