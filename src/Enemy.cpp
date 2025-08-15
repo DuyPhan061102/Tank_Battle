@@ -4,51 +4,53 @@
 #include <iostream>
 #include <cmath>
 
+// Constructor - khởi tạo enemy với vị trí, máu, tốc độ và hướng di chuyển ngẫu nhiên
 Enemy::Enemy(float x, float y, int hpValue)
 {
-    body.setPosition(x, y);
-    body.setSize(sf::Vector2f(30.f, 30.f));
+    body.setPosition(x, y); // Đặt vị trí
+    body.setSize(sf::Vector2f(30.f, 30.f)); // Kích thước khối body (nếu không có texture)
     body.setFillColor(sf::Color::Red);
-    speed = 50.f;
-    timeSinceDirectionChange = 0.f;
-    isHitEffect = false;
-    toBeRemoved = false;
+    speed = 50.f; // Tốc độ di chuyển
+    timeSinceDirectionChange = 0.f; // Thời gian kể từ khi đổi hướng
+    isHitEffect = false; // Hiệu ứng khi bị trúng đạn
+    toBeRemoved = false; // Cờ đánh dấu xoá
 
     hp = hpValue;
     maxHp = hpValue;
 
+    // Chọn hướng di chuyển ban đầu ngẫu nhiên
     int dir = rand() % 4;
-    if (dir == 0)
-        direction = {1.f, 0.f};
-    else if (dir == 1)
-        direction = {-1.f, 0.f};
-    else if (dir == 2)
-        direction = {0.f, 1.f};
-    else
-        direction = {0.f, -1.f};
+    if (dir == 0) direction = { 1.f, 0.f };
+    else if (dir == 1) direction = { -1.f, 0.f };
+    else if (dir == 2) direction = { 0.f, 1.f };
+    else direction = { 0.f, -1.f };
 }
 
-void Enemy::update(float deltaTime, const std::vector<Wall> &walls, const sf::Vector2f &playerPos)
+// Update có tham số walls và playerPos - xử lý di chuyển, va chạm, bắn đạn
+void Enemy::update(float deltaTime, const std::vector<Wall>& walls, const sf::Vector2f& playerPos)
 {
+    // Nếu đang trong trạng thái nổ
     if (isExploding)
     {
         explosionTimer += deltaTime;
-        if (explosionTimer > 0.4f)
+        if (explosionTimer > 0.4f) // Hết hiệu ứng nổ thì đánh dấu xoá
         {
             toBeRemoved = true;
         }
-        return;
+        return; // Không làm gì thêm khi đang nổ
     }
 
+    // Tính vị trí mới dựa trên hướng và tốc độ
     sf::Vector2f pos = body.getPosition();
     sf::Vector2f size = body.getSize();
     sf::Vector2f newPos = pos + direction * speed * deltaTime;
 
-    // Tạo bounds mới cho enemy sau khi di chuyển
+    // Tạo bounds giả để kiểm tra va chạm trước khi di chuyển
     sf::FloatRect futureBounds(newPos.x, newPos.y, size.x, size.y);
 
     bool collision = false;
-    for (const Wall &wall : walls)
+    // Kiểm tra va chạm với tường
+    for (const Wall& wall : walls)
     {
         if (wall.getBounds().intersects(futureBounds))
         {
@@ -57,7 +59,7 @@ void Enemy::update(float deltaTime, const std::vector<Wall> &walls, const sf::Ve
         }
     }
 
-    // Kiểm tra biên map (window 800x600, enemy 40x40)
+    // Kiểm tra va chạm biên bản đồ
     if (newPos.x < 0 || newPos.x + size.x > 800 ||
         newPos.y < 0 || newPos.y + size.y > 600)
     {
@@ -66,94 +68,84 @@ void Enemy::update(float deltaTime, const std::vector<Wall> &walls, const sf::Ve
 
     if (!collision)
     {
+        // Không va chạm → di chuyển bình thường
         body.move(direction * speed * deltaTime);
     }
     else
     {
-        // Đổi hướng ngẫu nhiên khi va chạm tường hoặc biên
+        // Va chạm → đổi hướng ngẫu nhiên
         int dir = rand() % 4;
-        if (dir == 0)
-            direction = {1.f, 0.f};
-        else if (dir == 1)
-            direction = {-1.f, 0.f};
-        else if (dir == 2)
-            direction = {0.f, 1.f};
-        else
-            direction = {0.f, -1.f};
+        if (dir == 0) direction = { 1.f, 0.f };
+        else if (dir == 1) direction = { -1.f, 0.f };
+        else if (dir == 2) direction = { 0.f, 1.f };
+        else direction = { 0.f, -1.f };
         timeSinceDirectionChange = 0.f;
     }
 
-    // Cập nhật vị trí sprite theo body
+    // Đồng bộ vị trí sprite với body
     tankSprite.setPosition(body.getPosition());
 
-    // Thêm đoạn này để quay sprite theo hướng di chuyển
+    // Quay sprite theo hướng di chuyển
     if (direction.x != 0.f || direction.y != 0.f)
     {
         float angle = std::atan2(direction.y, direction.x) * 180.f / 3.14159265f;
         tankSprite.setRotation(angle);
     }
 
+    // Đổi hướng ngẫu nhiên mỗi 2 giây
     timeSinceDirectionChange += deltaTime;
-
     if (timeSinceDirectionChange > 2.f)
     {
         int dir = rand() % 4;
-        if (dir == 0)
-            direction = {1.f, 0.f};
-        else if (dir == 1)
-            direction = {-1.f, 0.f};
-        else if (dir == 2)
-            direction = {0.f, 1.f};
-        else
-            direction = {0.f, -1.f};
+        if (dir == 0) direction = { 1.f, 0.f };
+        else if (dir == 1) direction = { -1.f, 0.f };
+        else if (dir == 2) direction = { 0.f, 1.f };
+        else direction = { 0.f, -1.f };
         timeSinceDirectionChange = 0.f;
     }
 
-    // Sau khi trúng đạn thì chờ 0.2s rồi đánh dấu xoá
+    // Sau khi trúng đạn → 0.2s sau thì hết hiệu ứng
     if (isHitEffect && hitClock.getElapsedTime().asSeconds() > 0.2f)
     {
         isHitEffect = false;
         body.setFillColor(sf::Color::Red);
     }
 
-    // enemy bắn
-    // Thêm logic bắn đạn thông minh
+    // Bắn đạn thông minh nếu có thể
     smartShoot(playerPos, walls);
 
-    // Cập nhật đạn
-    for (auto &bullet : bullets)
+    // Cập nhật vị trí đạn
+    for (auto& bullet : bullets)
         bullet.update(deltaTime);
 
-    // Xóa đạn va chạm tường HOẶC ra khỏi màn hình
+    // Xoá đạn khi chạm tường hoặc ra ngoài màn hình
     bullets.erase(
         std::remove_if(bullets.begin(), bullets.end(),
             [&walls, this](const Bullet& bullet) -> bool {
-                // Kiểm tra va chạm với tường
                 for (const auto& wall : walls) {
                     if (bullet.getBounds().intersects(wall.getBounds())) {
-                        return true; // Xóa đạn khi dính tường
+                        return true;
                     }
                 }
-                
-                // Kiểm tra ra khỏi màn hình
                 if (windowPtr != nullptr && bullet.isOffScreen(*windowPtr)) {
-                    return true; // Xóa đạn khi ra khỏi màn hình
+                    return true;
                 }
-                
-                return false; // Giữ đạn
+                return false;
             }),
         bullets.end()
     );
 }
 
+// Update không tham số - chỉ gọi lại update chính với dữ liệu rỗng
 void Enemy::update(float deltaTime)
 {
     std::vector<Wall> emptyWalls;
-    sf::Vector2f dummyPlayerPos(0.0f, 0.0f); // Vị trí player giả
-    update(deltaTime, emptyWalls, dummyPlayerPos); // Gọi hàm update với 3 tham số
+    sf::Vector2f dummyPlayerPos(0.0f, 0.0f);
+    update(deltaTime, emptyWalls, dummyPlayerPos);
 }
 
-void Enemy::draw(sf::RenderWindow &window) const
+// Vẽ enemy, thanh máu, và đạn
+void Enemy::draw(sf::RenderWindow& window) const
 {
     if (isExploding)
         window.draw(explosionSprite);
@@ -173,17 +165,18 @@ void Enemy::draw(sf::RenderWindow &window) const
 
     window.draw(healthBarBg);
     window.draw(healthBar);
-    // Vẽ đạn của enemy
-    for (const auto &bullet : bullets)
+
+    // Vẽ tất cả đạn
+    for (const auto& bullet : bullets)
     {
         bullet.draw(window);
     }
 }
 
-bool Enemy::isHit(const sf::FloatRect &bounds)
+// Kiểm tra va chạm đạn → trừ máu
+bool Enemy::isHit(const sf::FloatRect& bounds)
 {
-    // Nếu là va chạm với đạn (không phải player), luôn trừ máu
-    if (body.getGlobalBounds().intersects(bounds))
+    if (getBounds().intersects(bounds))
     {
         std::cout << "Enemy hit! HP: " << hp << std::endl;
         takeDamage(1);
@@ -192,15 +185,15 @@ bool Enemy::isHit(const sf::FloatRect &bounds)
     return false;
 }
 
+// Giảm máu, kích hoạt hiệu ứng trúng đạn, xử lý chết
 void Enemy::takeDamage(int amount)
 {
-    if (isDead)
-        return;
-    if (hp <= 0)
-        return;
+    if (isDead) return;
+    if (hp <= 0) return;
+
     hp -= amount;
-    if (hp < 0)
-        hp = 0;
+    if (hp < 0) hp = 0;
+
     isHitEffect = true;
     body.setFillColor(sf::Color::White);
     hitClock.restart();
@@ -212,11 +205,12 @@ void Enemy::takeDamage(int amount)
     }
 }
 
+// Bắt đầu hiệu ứng nổ
 void Enemy::markToRemove()
 {
     if (!explosionTexture.loadFromFile("assets/Images/explosion.png"))
     {
-        std::cout << "❌ Không thể tải explosion.png\n";
+        std::cout << "Không thể tải explosion.png\n";
     }
     else
     {
@@ -226,23 +220,26 @@ void Enemy::markToRemove()
         isExploding = true;
         explosionTimer = 0.f;
     }
-    toBeRemoved = false; // Đợi hiệu ứng xong mới xóa
+    toBeRemoved = false; // Đợi hiệu ứng xong mới xoá thật
 }
 
 bool Enemy::shouldBeRemoved() const
 {
     return toBeRemoved;
 }
+
 void Enemy::move(float dx, float dy)
 {
     body.move(dx, dy);
 }
+
 void Enemy::setSpeed(float newSpeed)
 {
     speed = newSpeed;
 }
 
-void Enemy::chasePlayer(const sf::Vector2f &playerPos, float dt, const std::vector<Wall> &walls)
+// Di chuyển đuổi theo player
+void Enemy::chasePlayer(const sf::Vector2f& playerPos, float dt, const std::vector<Wall>& walls)
 {
     sf::Vector2f pos = body.getPosition();
     sf::Vector2f dir = playerPos - pos;
@@ -252,12 +249,14 @@ void Enemy::chasePlayer(const sf::Vector2f &playerPos, float dt, const std::vect
         dir /= len;
 
     sf::Vector2f movement = dir * speed * dt;
+
+    // Bounds mới sau khi di chuyển
     sf::FloatRect futureBounds = body.getGlobalBounds();
     futureBounds.left += movement.x;
     futureBounds.top += movement.y;
 
     bool collision = false;
-    for (const Wall &wall : walls)
+    for (const Wall& wall : walls)
     {
         if (wall.getBounds().intersects(futureBounds))
         {
@@ -266,7 +265,7 @@ void Enemy::chasePlayer(const sf::Vector2f &playerPos, float dt, const std::vect
         }
     }
 
-    // Kiểm tra biên map
+    // Kiểm tra biên bản đồ
     if (futureBounds.left < 0 || futureBounds.left + futureBounds.width > 800 ||
         futureBounds.top < 0 || futureBounds.top + futureBounds.height > 600)
     {
@@ -275,13 +274,10 @@ void Enemy::chasePlayer(const sf::Vector2f &playerPos, float dt, const std::vect
 
     if (!collision)
         body.move(movement);
-    // Nếu va chạm thì không di chuyển hoặc có thể đổi hướng ngẫu nhiên
 }
 
-int Enemy::getMaxHP() const
-{
-    return maxHp;
-}
+// Getter HP, MaxHP, hồi máu
+int Enemy::getMaxHP() const { return maxHp; }
 
 void Enemy::heal(float ratio)
 {
@@ -290,40 +286,35 @@ void Enemy::heal(float ratio)
     if (hp > maxHp)
         hp = maxHp;
 }
-int Enemy::getHP() const
-{
-    return hp;
-}
-// enemy bắn đạn
 
-bool Enemy::hasLineOfSight(const sf::Vector2f &playerPos, const std::vector<Wall> &walls) const
+int Enemy::getHP() const { return hp; }
+
+// Kiểm tra đường bắn thẳng (không bị tường chắn) trong phạm vi
+bool Enemy::hasLineOfSight(const sf::Vector2f& playerPos, const std::vector<Wall>& walls) const
 {
     sf::Vector2f enemyCenter = sf::Vector2f(body.getPosition().x + body.getSize().x / 2,
-                                            body.getPosition().y + body.getSize().y / 2);
+        body.getPosition().y + body.getSize().y / 2);
 
-    // Kiểm tra khoảng cách
     float distance = std::sqrt(std::pow(playerPos.x - enemyCenter.x, 2) +
-                               std::pow(playerPos.y - enemyCenter.y, 2));
+        std::pow(playerPos.y - enemyCenter.y, 2));
     if (distance > shootRange)
         return false;
 
-    // Kiểm tra có tường chắn không
     sf::Vector2f direction = playerPos - enemyCenter;
     float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
     if (length == 0)
         return false;
 
-    direction /= length; // Normalize
+    direction /= length; // Chuẩn hoá vector
 
-    // Raycast từ enemy đến player
-    int steps = static_cast<int>(length / 5.0f); // Kiểm tra mỗi 5 pixel
+    // Raycast mỗi 5 pixel
+    int steps = static_cast<int>(length / 5.0f);
     for (int i = 1; i < steps; ++i)
     {
         sf::Vector2f checkPoint = enemyCenter + direction * (i * 5.0f);
         sf::FloatRect checkRect(checkPoint.x - 2, checkPoint.y - 2, 4, 4);
 
-        // Kiểm tra va chạm với tường
-        for (const auto &wall : walls)
+        for (const auto& wall : walls)
         {
             if (wall.getBounds().intersects(checkRect))
                 return false;
@@ -333,33 +324,37 @@ bool Enemy::hasLineOfSight(const sf::Vector2f &playerPos, const std::vector<Wall
     return true;
 }
 
-bool Enemy::canShoot(const sf::Vector2f &playerPos, const std::vector<Wall> &walls) const
+// Kiểm tra đủ điều kiện bắn (cooldown + tầm nhìn)
+bool Enemy::canShoot(const sf::Vector2f& playerPos, const std::vector<Wall>& walls) const
 {
-    // Kiểm tra cooldown
     if (shootClock.getElapsedTime().asSeconds() < shootCooldown)
         return false;
-
-    // Kiểm tra tầm nhìn
     return hasLineOfSight(playerPos, walls);
 }
 
-void Enemy::smartShoot(const sf::Vector2f &playerPos, const std::vector<Wall> &walls)
+// Bắn đạn thông minh về phía player
+void Enemy::smartShoot(const sf::Vector2f& playerPos, const std::vector<Wall>& walls)
 {
     if (!canShoot(playerPos, walls))
         return;
 
     sf::Vector2f enemyCenter = sf::Vector2f(body.getPosition().x + body.getSize().x / 2,
-                                            body.getPosition().y + body.getSize().y / 2);
+        body.getPosition().y + body.getSize().y / 2);
     sf::Vector2f direction = playerPos - enemyCenter;
-    float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+    float length = std::sqrt(direction.x * direction.x + direction.y* direction.y);
 
     if (length != 0.0f)
     {
-        direction /= length; // Normalize
+        direction /= length; // Chuẩn hoá vector
         float bulletSpeed = 250.0f;
         bullets.emplace_back(enemyCenter, direction, bulletSpeed);
         shootClock.restart();
 
         std::cout << "Enemy bắn đạn về phía player!\n";
     }
+}
+
+// Lấy hitbox của enemy (dựa vào sprite)
+sf::FloatRect Enemy::getBounds() const {
+    return tankSprite.getGlobalBounds();
 }

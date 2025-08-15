@@ -8,11 +8,11 @@
 
 
 Player2Tank::Player2Tank() {
-    speed = 200.f;
+    speed = 140.f;
     body.setFillColor(sf::Color::Blue);
     body.setSize(sf::Vector2f(22.f, 22.f));
-    currentHealth = 100;
-    maxHealth = 100;
+    currentHealth = 200;
+    maxHealth = 200;
 
     if (!tankTexture.loadFromFile("assets/Images/tank2.png")) 
         std::cout << "Không thể tải tank2.png\n";
@@ -73,12 +73,17 @@ void Player2Tank::handleInput() {
 void Player2Tank::update(float deltaTime) {
     handleInput();
     move(movement.x * speed * deltaTime, movement.y * speed * deltaTime);
+    // Đồng bộ sprite với vị trí & góc quay của body
+    tankSprite.setPosition(body.getPosition());
+    tankSprite.setRotation(body.getRotation());
+
 
     updateHealthBar();
 
     for (auto& bullet : bullets) {
         bullet.update(deltaTime);
     }
+
     for (auto it = bullets.begin(); it != bullets.end(); ) {
         bool hitWall = false;
 
@@ -116,7 +121,7 @@ void Player2Tank::update(float deltaTime) {
     if (isExploding)
     {
         explosionTimer += deltaTime;
-        if (explosionTimer > 0.4f) 
+        if (explosionTimer > 0.4f)
             isExploding = false;
         return;
     }
@@ -259,4 +264,7 @@ void Player2Tank::resetExplosion()
 {
     isExploding = false;
     explosionTimer = 0.f;
+}
+sf::FloatRect Player2Tank::getBounds() const {
+    return tankSprite.getGlobalBounds(); // Dùng sprite để tính hitbox
 }
