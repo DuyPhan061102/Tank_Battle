@@ -1,0 +1,1442 @@
+// Game.cpp
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include "Game.h"
+#include "Enemy.h"
+#include "EnemyTank.h"
+#include "EnemyScout.h"
+#include "EnemyBoss.h"
+
+Game::Game() : window(sf::VideoMode(800, 600), "Tank Battle"), gameState(GameState::Menu), isRunning(true), isFullscreen(true)
+{
+    // Cài đặt vị trí và thuộc tính Player
+    player.setPosition(playerSpawnPosition);
+    player.setWalls(&walls);
+    
+    std::srand(static_cast<unsigned>(time(nullptr)));
+    player.setWindow(&window);
+    player.setShootSound(&shootSound);
+
+    //Khởi tạo điểm số và load điểm cao nhất từ file
+    score = 0;
+    highscoreManager.load();
+    const auto& scores = highscoreManager.getScores();
+    if (!scores.empty())
+        highScore = scores.front().score;
+    else
+        highScore = 0;
+    highScoreText.setString("High Score: " + std::to_string(highScore));
+
+    // Giới hạn FPS game
+    window.setFramerateLimit(60);
+    
+
+    // Cài đặt vị trí và thuộc tính cho Player 2 (PvP)
+    player2.setPosition(player2SpawnPosition);
+    player2.setWalls(&walls);
+    player2.setWindow(&window);
+    player2.setShootSound(&shootSound);
+
+    // Gọi các hàm setup tài nguyên, giao diện, âm thanh
+    loadAssets();
+    setupBackgrounds();
+    setupFontsAndText();
+    setupTutorial();
+    setupUIButtons();
+    setupAudio();
+    // Đặt trạng thái game ban đầu là Menu
+    setGameState(GameState::Menu);
+}
+
+void Game::setGameState(GameState newState)
+{
+    if (newState != gameState)
+    {   
+
+        // Dừng nhạc hiện tại
+        menu_backgroundMusic.stop();
+        backgroundMusic.stop();
+        
+        // Phát nhạc phù hợp với trạng thái mới
+        switch (newState)
+        {
+        case GameState::Menu:
+        case GameState::MoreMenu:
+        case GameState::Tutorial:
+        case GameState::Volume:
+            menu_backgroundMusic.play();
+            break;
+        case GameState::Playing:
+            backgroundMusic.play();
+            break;
+        default:
+            break;
+        }
+        gameState = newState;
+    }
+}
+
+
+void Game::loadAssets()
+{
+    // Load texture background, menu, font, phím WASD, SPACE, ESC, tường, xe tăng, cổng thoát
+   // Nếu file không tồn tại thì in thông báo lỗi
+   // Sau khi load cổng thoát thì scale
+
+    if (!backgroundTexture.loadFromFile("assets/Images/background2.jpg"))
+        std::cout << "Không thể tải background.jpg\n";
+
+    if (!menuBackgroundTexture.loadFromFile("assets/Images/menu3.jpg"))
+        std::cout << "Không thể tải menu3.jpg\n";
+
+    if (!menuBackgroundTexture2.loadFromFile("assets/Images/menu.jpg"))
+        std::cout << "Không thể tải menu.jpg\n";
+
+    if (!font.loadFromFile("assets/Fonts/Orbitron-Regular.ttf"))
+        std::cout << "Không thể tải font Roboto-Regular.ttf\n";
+
+    if (!wasdTexture.loadFromFile("assets/Images/key_wasd.png"))
+        std::cout << "Không thể tải ảnh WASD\n";
+
+    if (!spaceTexture.loadFromFile("assets/Images/key_space.png"))
+        std::cout << "Không thể tải ảnh SPACE\n";
+
+    if (!wallTexture.loadFromFile("assets/Images/wall.png"))
+        std::cout << "Không thể tải wall.png\n";
+
+    if (!strongWallTexture.loadFromFile("assets/Images/strong_wall.png"))
+        std::cout << "Không thể tải strong_wall.png\n";
+
+    if (!playerTexture.loadFromFile("assets/Images/tank1.png"))
+        std::cout << "Không thể tải player_tank.png\n";
+
+    if (!arrowsTexture.loadFromFile("assets/Images/arrowkeys.png"))
+        std::cout << "Không thể tải ảnh ARROW KEYS\n";
+
+    if (!enterTexture.loadFromFile("assets/Images/enterkey.png"))
+        std::cout << "Không thể tải ảnh ENTER KEY\n";
+
+    if (!exitGateTexture.loadFromFile("assets/Images/exit_gate2.png"))
+    {
+        std::cerr << "Không thể load exit_gate.png\n";
+    }
+    else
+    {
+        exitGate.setTexture(exitGateTexture);
+        exitGate.setScale(80.f / exitGateTexture.getSize().x, 80.f / exitGateTexture.getSize().y);
+    }
+}
+
+void Game::setupBackgrounds()
+{
+    // Cài texture nền gameplay, scale vừa kích thước cửa sổ
+    // Cài texture nền menu, scale vừa kích thước cửa sổ
+    backgroundSprite.setTexture(backgroundTexture);
+    backgroundSprite.setScale(
+        window.getSize().x / backgroundSprite.getLocalBounds().width,
+        window.getSize().y / backgroundSprite.getLocalBounds().height);
+
+    menuBackgroundSprite.setTexture(menuBackgroundTexture);
+    menuBackgroundSprite.setScale(
+        window.getSize().x / menuBackgroundSprite.getLocalBounds().width,
+        window.getSize().y / menuBackgroundSprite.getLocalBounds().height);
+
+    menuBackgroundSprite2.setTexture(menuBackgroundTexture2);
+    menuBackgroundSprite2.setScale(
+        window.getSize().x / menuBackgroundSprite2.getLocalBounds().width,
+        window.getSize().y / menuBackgroundSprite2.getLocalBounds().height);
+}
+
+void Game::setupTutorial()
+{
+    // Cài đặt hình ảnh minh họa phím điều khiển (WASD, SPACE, ENTER, ARROWS)
+    // Vẽ khung nền trong menu hướng dẫn
+    // Cài text hướng dẫn gameplay
+    wasdSprite.setTexture(wasdTexture);
+    wasdSprite.setPosition(60.f, 200.f);
+    wasdSprite.setScale(0.7f, 0.7f);
+
+    spaceSprite.setTexture(spaceTexture);
+    spaceSprite.setPosition(330.f, 330.f);
+    spaceSprite.setScale(0.3f, 0.3f);
+
+    arrowsSprite.setTexture(arrowsTexture);
+    arrowsSprite.setPosition(85.f, 350.f);
+    arrowsSprite.setScale(0.4f, 0.4f);
+
+    enterSprite.setTexture(enterTexture);
+    enterSprite.setPosition(560.f, 260.f);
+    enterSprite.setScale(0.35f, 0.35f);
+
+    tutorialBox.setSize(sf::Vector2f(700.f, 450.f));
+    tutorialBox.setFillColor(sf::Color(100, 100, 100, 200));
+    tutorialBox.setOutlineThickness(3.f);
+    tutorialBox.setOutlineColor(sf::Color::Black);
+    tutorialBox.setPosition(50.f, 75.f);
+
+    tutorialText.setFont(font);
+    tutorialText.setCharacterSize(23);
+    tutorialText.setFillColor(sf::Color::White);
+    tutorialText.setString("Instructions:\n\n- Player 1: W/A/S/D to move the tank.\n- Player 2: Up/Down/Right/Left to move the tank. \n- Press Space (P1) / Enter (P2) to shoot.");
+    tutorialText.setPosition(80.f, 100.f);
+}
+
+void Game::setupFontsAndText()
+{
+    // Cài đặt font, màu, kích thước và vị trí cho các text:
+    // - Điểm số (Score)
+    scoreText.setFont(font);
+    scoreText.setCharacterSize(24);
+
+    // Màu trắng hơi ngả vàng để dễ nổi trên nền xám
+    scoreText.setFillColor(sf::Color(255, 240, 200));
+
+    // Thêm viền đen để chữ nổi bật
+    scoreText.setOutlineColor(sf::Color::Black);
+    scoreText.setOutlineThickness(2);
+
+    scoreText.setPosition(10.f, 10.f);
+    scoreText.setString("Score: 0");
+
+
+    // - Điểm PvP (P1 Score, P2 Score)
+    // P1 Score
+    scoreText1.setFont(font);
+    scoreText1.setCharacterSize(20);
+    scoreText1.setFillColor(sf::Color::Red);
+    scoreText1.setOutlineColor(sf::Color::Black); 
+    scoreText1.setOutlineThickness(2.f);           
+    scoreText1.setPosition(10.f, 10.f);
+    scoreText1.setString("P1 Score: 0");
+
+    // P2 Score
+    scoreText2.setFont(font);
+    scoreText2.setCharacterSize(20);
+    scoreText2.setFillColor(sf::Color::Blue);
+    scoreText2.setOutlineColor(sf::Color::Black); 
+    scoreText2.setOutlineThickness(2.f);         
+    scoreText2.setPosition(10.f, 40.f);
+    scoreText2.setString("P2 Score: 0");
+
+    // - Số wave hiện tại
+    waveText.setFont(font);
+    waveText.setCharacterSize(24);
+    waveText.setFillColor(sf::Color(0, 200, 200));
+    waveText.setOutlineColor(sf::Color::Black);
+    waveText.setOutlineThickness(2);
+    waveText.setPosition(10.f, 40.f);
+    waveText.setString("Wave: 1");
+
+
+    // - Tiêu đề game
+    gameTitle.setFont(font);
+    gameTitle.setString("TANK BATTLE");
+    gameTitle.setCharacterSize(64);
+    gameTitle.setFillColor(sf::Color::Red);            
+    gameTitle.setOutlineColor(sf::Color::Black);        
+    gameTitle.setOutlineThickness(3);                   
+
+
+    sf::FloatRect titleBounds = gameTitle.getLocalBounds();
+    gameTitle.setOrigin(titleBounds.left + titleBounds.width / 2.f, titleBounds.top + titleBounds.height / 2.f);
+    gameTitle.setPosition(window.getSize().x / 2.f, 70.f);
+
+
+    // - Thông báo Game Over, High Score
+    gameOverText.setFont(font);
+    gameOverText.setString("GAME OVER");
+    gameOverText.setCharacterSize(48);
+    gameOverText.setFillColor(sf::Color::Red);         
+    gameOverText.setOutlineColor(sf::Color::Black);     
+    gameOverText.setOutlineThickness(3);                
+    gameOverText.setPosition(230.f, 90.f);
+
+
+    highScoreText.setFont(font);
+    highScoreText.setCharacterSize(24);
+    highScoreText.setFillColor(sf::Color(220, 180, 0)); 
+    highScoreText.setOutlineColor(sf::Color::Black);    
+    highScoreText.setOutlineThickness(2);
+    highScoreText.setPosition(10.f, 70.f);
+    highScoreText.setString("High Score: " + std::to_string(highScore));
+
+
+    highScoreMenuText.setFont(font);
+    highScoreMenuText.setCharacterSize(20);
+    highScoreMenuText.setFillColor(sf::Color::Black);
+    highScoreMenuText.setString("High Score: " + std::to_string(highScore));
+}
+
+void Game::setupUIButtons()
+{
+    float centerX = window.getSize().x / 2.f;
+
+    // Lambda setup nút ở giữa màn hình
+    auto setupButtonFull = [&](sf::Text &text, sf::RectangleShape &box, const std::string &str, unsigned int charSize, float y)
+    {
+        // Thiết lập font, chữ, màu, kích thước
+        text.setFont(font);
+        text.setString(str);
+        text.setCharacterSize(charSize);
+        text.setFillColor(sf::Color::White);
+        text.setScale(1.f, 1.f);
+
+        // Căn giữa text theo vị trí
+        sf::FloatRect textBounds = text.getLocalBounds();
+        text.setOrigin(textBounds.left + textBounds.width / 2.f, textBounds.top + textBounds.height / 2.f);
+        text.setPosition(centerX, y);
+
+
+        // Tạo khung bao quanh chữ (button box)
+        float paddingX = 40.f;
+        float paddingY = 20.f;
+        box.setSize(sf::Vector2f(textBounds.width + paddingX, textBounds.height + paddingY));
+        box.setOrigin(box.getSize().x / 2.f, box.getSize().y / 2.f);
+        box.setPosition(text.getPosition());
+        box.setFillColor(sf::Color(150, 150, 150, 180));
+        box.setOutlineThickness(2.f);
+        box.setOutlineColor(sf::Color::Black);
+    };
+
+    // Lambda setup nút ở góc trên bên phải
+    auto setupButtonTopRight = [&](sf::Text& text, sf::RectangleShape& box,
+        const std::string& str, unsigned int charSize,
+        float offsetX, float offsetY)
+        {
+            text.setFont(font);
+            text.setString(str);
+            text.setCharacterSize(charSize);
+            text.setFillColor(sf::Color::White);
+            text.setScale(1.f, 1.f);
+            sf::FloatRect textBounds = text.getLocalBounds();
+            text.setOrigin(textBounds.left + textBounds.width / 2.f,
+                textBounds.top + textBounds.height / 2.f);
+
+            // Tạo box và tính vị trí ở góc trên bên phải
+            float paddingX = 40.f;
+            float paddingY = 20.f;
+            box.setSize(sf::Vector2f(textBounds.width + paddingX, textBounds.height + paddingY));
+            box.setOrigin(box.getSize().x / 2.f, box.getSize().y / 2.f);
+            box.setFillColor(sf::Color(150, 150, 150, 180));
+            box.setOutlineThickness(2.f);
+            box.setOutlineColor(sf::Color::Black);
+            float posX = window.getSize().x - box.getSize().x / 2.f - offsetX;
+            float posY = box.getSize().y / 2.f + offsetY;
+            box.setPosition(posX, posY);
+            text.setPosition(posX, posY);
+        };
+
+    // Nút BACK đặt ở góc trên bên phải
+    backButton.setCharacterSize(28);
+    setupButtonTopRight(backButton, backButtonBox, "BACK", 28, 20.f, 20.f);
+
+    // Nút menu chính
+    setupButtonFull(playButton, playButtonBox, "PLAY", 40, 200.f);
+    setupButtonFull(pvpButton, pvpButtonBox, "PvP", 40, 300.f);
+    setupButtonFull(moreButton, moreButtonBox, "MORE", 40, 400.f);
+    setupButtonFull(quitButton, quitButtonBox, "QUIT", 40, 500.f);
+
+    // Nút Game Over
+    setupButtonFull(retryButton, retryButtonBox, "RETRY", 40, 230.f);
+    setupButtonFull(exitButton, exitButtonBox, "EXIT", 40, 330.f);
+
+    // Nút trong More Menu
+    setupButtonFull(tutorialButton, tutorialButtonBox, "TUTORIAL", 36, 200.f);
+    setupButtonFull(volumeButton, volumeButtonBox, "VOLUME", 36, 300.f);
+    setupButtonFull(highScoreButton, highScoreButtonBox, "HIGHSCORE", 36, 400.f);
+
+    // Nút trong Volume Menu
+    setupButtonFull(musicText, musicButton, "MUSIC: ON", 45, 220.f);
+    setupButtonFull(sfxText, sfxButton, "SFX: ON", 45, 320.f);
+
+    // Nút RETURN TO MENU
+    setupButtonFull(returnButton, returnButtonBox, "RETURN TO MENU", 40, 430.f);
+
+    // Căn high score text dưới nút High Score
+    float hsBoxCenter = highScoreButtonBox.getPosition().x + highScoreButtonBox.getSize().x / 2.f;
+    float hsTextWidth = highScoreMenuText.getGlobalBounds().width;
+    highScoreMenuText.setPosition(hsBoxCenter - hsTextWidth / 2.f,
+                                  highScoreButtonBox.getPosition().y + highScoreButtonBox.getSize().y + 8.f);
+}
+
+void Game::setupAudio()
+{
+    // Load âm thanh click
+    if (!clickBuffer.loadFromFile("assets/Sounds/click.wav"))
+        std::cout << "Không thể tải click.wav\n";
+    else
+        clickSound.setBuffer(clickBuffer);
+
+    // Load âm thanh bắn súng
+    if (!shootBuffer.loadFromFile("assets/Sounds/shoot.wav"))
+        std::cout << "Không thể tải file shoot.wav\n";
+    else
+    {
+        shootSound.setBuffer(shootBuffer);
+        shootSound.setVolume(100.f);
+    }
+
+    // Load âm thanh nổ
+    if (!explosionBuffer.loadFromFile("assets/Sounds/explosion.wav"))
+        std::cout << "Không thể tải file explosion.wav\n";
+    else
+    {
+        explosionSound.setBuffer(explosionBuffer);
+        explosionSound.setVolume(100.f);
+    }
+    // Nhạc nền gameplay
+    if (!backgroundMusic.openFromFile("assets/Sounds/background.ogg"))
+    {
+        std::cout << "Không thể mở background.ogg\n";
+    }
+    else
+    {
+        backgroundMusic.setLoop(true);
+        backgroundMusic.setVolume(30.f);
+    }
+
+    // Nhạc nền menu
+    if (!menu_backgroundMusic.openFromFile("assets/Sounds/menu_music.ogg"))
+    {
+        std::cout << "Không thể mở menu_music.ogg\n";
+    }
+    else
+    {
+        menu_backgroundMusic.setLoop(true);
+        menu_backgroundMusic.setVolume(30.f);
+    }
+}
+
+void Game::run()
+{
+    while (window.isOpen())
+    {
+        float dt = clock.restart().asSeconds(); // Thời gian giữa 2 frame
+        processEvents(); // Xử lý input
+        update(dt); // Cập nhật logic
+        render(); // Vẽ màn hình
+    }
+}
+
+void Game::processEvents()
+{
+    sf::Event event;
+    while (window.pollEvent(event)) // Lấy tất cả sự kiện trong hàng đợi
+    {
+        //  Đóng cửa sổ khi bấm nút X
+        if (event.type == sf::Event::Closed)
+            window.close();
+        
+        //  Xử lý khi nhấn chuột trái (MouseButtonPressed)
+        if (event.type == sf::Event::MouseButtonPressed)
+        {
+            sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+
+            // Nếu đang ở Menu chính
+            if (gameState == GameState::Menu)
+            {   
+                // Nút PLAY thì bắt đầu chế độ Campaign
+                if (playButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    gameState = GameState::Playing;
+                    isRunning = true;
+                    score = 0;
+                    scoreText.setString("Score: 0");
+                    bullets.clear();
+                    enemies.clear();
+                    waveNumber = 1;
+                    enemyPerWave = 2;
+                    enemySpawnedCount = 0;
+                    enemyKilledCount = 0; 
+                    gateActive = false;   
+
+                    // Reset player
+                    player = PlayerTank();
+                    player.setWalls(&walls);
+                    player.setWindow(&window);
+                    player.setShootSound(&shootSound);
+                    player.setTexture(&playerTexture);
+                    player.setPosition(playerSpawnPosition);
+                    player.resetHP();                  
+                    
+                    // Load map wave 1
+                    createMaze("assets/Maps/maze1.txt");
+                }
+                // Nút PvP - bắt đầu chế độ đối kháng
+                else if (pvpButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    lastGameState = GameState::PvsP;
+                    gameState = GameState::PvsP;
+                    isRunning = true;
+
+                    p1score = 0;
+                    p2score = 0;
+
+                    bullets.clear();
+                    enemies.clear();
+
+                    // Reset player 1
+                    player = PlayerTank();
+                    player.setWalls(&walls);
+                    player.setWindow(&window);
+                    player.setShootSound(&shootSound);
+                    player.setTexture(&playerTexture);
+                    player.setPosition(playerSpawnPosition);
+                    player.resetHP();
+                    player.clearBullets(); 
+
+                    // Reset Player 2
+                    player2 = Player2Tank();
+                    player2.setWalls(&walls);
+                    player2.setWindow(&window);
+                    player2.setShootSound(&shootSound);
+                    player2.setTexture(&playerTexture);        
+                    player2.setPosition(player2SpawnPosition);
+                    player2.resetHP();
+                    player2.clearBullets(); 
+
+                    createMaze("assets/Maps/maze1.txt");
+                }
+                // Nút QUIT - thoát game
+                    else if (quitButton.getGlobalBounds().contains(mousePos))
+                    {
+                        clickSound.play();
+                        window.close();
+                    }
+                // Nút MORE - sang menu phụ
+                    else if (moreButton.getGlobalBounds().contains(mousePos))
+                    {
+                        clickSound.play();
+                        gameState = GameState::MoreMenu;
+                    }
+                }
+            // Menu phụ (More Menu)
+                else if (gameState == GameState::MoreMenu)
+                {
+                    if (tutorialButton.getGlobalBounds().contains(mousePos))
+                    {
+                        clickSound.play();
+                        gameState = GameState::Tutorial;
+                    }
+                    else if (volumeButton.getGlobalBounds().contains(mousePos))
+                    {
+                        clickSound.play();
+                        gameState = GameState::Volume;
+                    }
+                    else if (highScoreButton.getGlobalBounds().contains(mousePos))
+                    {
+                        clickSound.play();
+                        gameState = GameState::HighScoreMenu;
+                    }
+                    else if (backButton.getGlobalBounds().contains(mousePos))
+                    {
+                        clickSound.play();
+                        gameState = GameState::Menu;
+                    }
+                }
+                // Menu chỉnh âm lượng (Volume)
+                else if (gameState == GameState::Volume)
+                {   
+                    // Nút MUSIC ON/OFF
+                    if (musicButton.getGlobalBounds().contains(mousePos))
+                    {
+                        clickSound.play();
+                        isMusicOn = !isMusicOn;
+                        musicText.setString("MUSIC: " + std::string(isMusicOn ? "ON" : "OFF"));
+                        if (!isMusicOn)
+                        {
+                            backgroundMusic.stop();
+                            menu_backgroundMusic.stop();
+                        }
+                        else
+                        {
+                            if (gameState == GameState::Playing)
+                            {
+                            menu_backgroundMusic.stop();
+                            backgroundMusic.play();
+                            }
+                            else
+                            {
+                            backgroundMusic.stop();
+                            menu_backgroundMusic.play();
+                            }
+                        }
+                    }
+                    // Nút SFX ON/OFF
+                else if (sfxButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    isSFXOn = !isSFXOn;
+                    sfxText.setString("SFX: " + std::string(isSFXOn ? "ON" : "OFF"));
+                    shootSound.setVolume(isSFXOn ? 100.f : 0.f);
+                    explosionSound.setVolume(isSFXOn ? 100.f : 0.f);
+                    clickSound.setVolume(isSFXOn ? 100.f : 0.f);
+                }
+                    // Nút BACK
+                else if (backButton.getGlobalBounds().contains(mousePos))
+                {
+                    clickSound.play();
+                    gameState = GameState::MoreMenu;
+                }
+            }
+            // Menu hướng dẫn (Tutorial)
+                else if (gameState == GameState::Tutorial)
+                {
+                    if (backButton.getGlobalBounds().contains(mousePos))
+                    {
+                    clickSound.play();
+                    gameState = GameState::MoreMenu;
+                    }
+                }
+                //  Menu High Score
+                else if (gameState == GameState::HighScoreMenu)
+                {
+                    if (backButton.getGlobalBounds().contains(mousePos))
+                    {
+                        clickSound.play();
+                        gameState = GameState::MoreMenu;
+                    }
+                }
+                // Màn Game Over
+                else if (gameState == GameState::GameOver)
+                {
+                    // Nút RETRY - chơi lại
+                    if (retryButton.getGlobalBounds().contains(mousePos))
+                    {
+                        clickSound.play();
+                        isRunning = true;
+                        bullets.clear();
+                        enemies.clear();
+
+                        // Nếu là PvP
+                        if (lastGameState == GameState::PvsP)
+                        {
+                            gameState = GameState::PvsP;
+                            p1score = 0;
+                            p2score = 0;
+
+                            player = PlayerTank();
+                            player.setWalls(&walls);
+                            player.setWindow(&window);
+                            player.setShootSound(&shootSound);
+                            player.setTexture(&playerTexture);
+                            player.setPosition(playerSpawnPosition);
+                            player.resetHP();
+                            player.clearBullets();
+
+                            player2 = Player2Tank();
+                            player2.setWalls(&walls);
+                            player2.setWindow(&window);
+                            player2.setShootSound(&shootSound);
+                            player2.setTexture(&playerTexture);
+                            player2.setPosition(player2SpawnPosition);
+                            player2.resetHP();
+                            player2.clearBullets();
+
+                            createMaze("assets/Maps/maze3.txt"); 
+                        }
+                        else
+                        {   // Nếu là chế độ đánh bot
+                            gameState = GameState::Playing;
+                            waveNumber = 1;
+                            enemyPerWave = 2;
+                            enemySpawnedCount = 0;
+                            enemyKilledCount = 0; 
+                            gateActive = false;   
+                            score = 0;
+                            scoreText.setString("Score: 0");
+                            bullets.clear();
+                            enemies.clear();
+
+                            player = PlayerTank();
+                            player.setWalls(&walls);
+                            player.setWindow(&window);
+                            player.setShootSound(&shootSound);
+                            player.setTexture(&playerTexture);
+                            player.setPosition(playerSpawnPosition);
+                            player.resetHP();
+
+                            createMaze("assets/Maps/maze1.txt");
+                        }
+                    }
+                    // Nút RETURN TO MENU
+                    else if (returnButton.getGlobalBounds().contains(mousePos))
+                    {
+                        lastGameState = GameState::Menu;
+                        clickSound.play();
+                        gameState = GameState::Menu;
+                    }
+                    // Nút EXIT
+                    else if (exitButton.getGlobalBounds().contains(mousePos))
+                    {
+                        clickSound.play();
+                        window.close();
+                    }
+                }
+                // Màn Victory
+                else if (gameState == GameState::Victory)
+                {
+                    if (retryButton.getGlobalBounds().contains(mousePos))
+                    {
+                        clickSound.play();
+                        gameState = GameState::Playing;
+                        isRunning = true;
+                        score = 0;
+                        scoreText.setString("Score: 0");
+                        bullets.clear();
+                        enemies.clear();
+                        waveNumber = 1;
+                        enemyPerWave = 2;
+                        enemySpawnedCount = 0;
+                        enemyKilledCount = 0;
+                        gateActive = false;
+
+                        player = PlayerTank();
+                        player.setWalls(&walls);
+                        player.setWindow(&window);
+                        player.setShootSound(&shootSound);
+                        player.setTexture(&playerTexture);
+                        player.setPosition(playerSpawnPosition);
+                        player.resetHP();
+
+                        createMaze("assets/Maps/maze1.txt");
+                    }
+                    else if (exitButton.getGlobalBounds().contains(mousePos))
+                    {
+                        clickSound.play();
+                        window.close();
+                    }
+                    else if (returnButton.getGlobalBounds().contains(mousePos))
+                    {
+                        lastGameState = GameState::Menu;
+                        clickSound.play();
+                        gameState = GameState::Menu;
+                    }
+                }
+            } // Kết thúc MouseButtonPressed
+        } // Kết thúc while pollEvent
+
+        //  Nếu game đang chạy và ở PvP - xử lý input Player 2
+        if (isRunning)
+        {
+            
+             if (gameState == GameState::PvsP)
+                player2.handleInput();
+        }
+    }
+
+    void Game::updateMenuButtonHovers()
+    {
+        // Lấy vị trí chuột trong hệ tọa độ của cửa sổ game
+        sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+
+        // Lambda đổi màu nút nếu chuột hover vào
+        auto updateButtonHover = [&](sf::Text& button, sf::RectangleShape& box)
+            {
+                if (button.getGlobalBounds().contains(mousePos))
+                {
+                    // Nếu chuột đang ở trên nút - đổi chữ thành màu vàng
+                    button.setFillColor(sf::Color::Yellow);
+                }
+                else
+                {   // Nếu chuột không ở trên nút → giữ màu trắng
+                    button.setFillColor(sf::Color::White);
+                }
+            };
+        // Kiểm tra tùy theo trạng thái game
+        switch (gameState)
+        {
+            //  Menu chính
+        case GameState::Menu:
+            updateButtonHover(playButton, playButtonBox);
+            updateButtonHover(moreButton, moreButtonBox);
+            updateButtonHover(quitButton, quitButtonBox);
+            break;
+
+            //  Màn hình Game Over
+        case GameState::GameOver:
+            updateButtonHover(retryButton, retryButtonBox);
+            updateButtonHover(exitButton, exitButtonBox);
+            updateButtonHover(returnButton, returnButtonBox);
+            break;
+
+            //  Menu phụ (More Menu)
+        case GameState::MoreMenu:
+            updateButtonHover(tutorialButton, tutorialButtonBox);
+            updateButtonHover(volumeButton, volumeButtonBox);
+            updateButtonHover(highScoreButton, highScoreButtonBox);
+            updateButtonHover(backButton, backButtonBox);
+            break;
+            //  Menu hướng dẫn (Tutorial)
+        case GameState::Tutorial:
+            updateButtonHover(backButton, backButtonBox);
+            break;
+            // Menu chỉnh âm lượng (Volume)
+        case GameState::Volume:
+            updateButtonHover(musicText, musicButton);
+            updateButtonHover(sfxText, sfxButton);
+            updateButtonHover(backButton, backButtonBox);
+            break;
+
+            //  Các trạng thái khác không làm gì
+        default:
+            break;
+        }
+    }
+
+    void Game::resetPvsPRound()
+    {
+        // Hồi đầy máu cho Player 1 và Player 2
+        player.resetHP();
+        player2.resetHP();
+        // Reset trạng thái nổ (explosion effect) của Player 2 nếu đang hiển thị
+        player2.resetExplosion();
+        // Đặt lại vị trí mặc định cho 2 người chơi
+        player.setPosition(sf::Vector2f(400.f, 500.f));
+        player2.setPosition(sf::Vector2f(400.f, 100.f));
+
+        // Xóa toàn bộ đạn còn lại trên màn hình của 2 người chơi
+        player.clearBullets();
+        player2.clearBullets();
+    }
+
+    void Game::update(float dt)
+    {
+        if (isMusicOn)
+        {
+            if (gameState == GameState::Playing || gameState == GameState::PvsP)
+            {
+                // Nếu đang chơi - dừng nhạc menu và phát nhạc gameplay
+                if (menu_backgroundMusic.getStatus() == sf::Music::Playing)
+                    menu_backgroundMusic.stop();
+                if (backgroundMusic.getStatus() != sf::Music::Playing)
+                    backgroundMusic.play();
+            }
+            else
+            {
+                // Nếu không chơi - dừng nhạc gameplay và phát nhạc menu
+                if (backgroundMusic.getStatus() == sf::Music::Playing)
+                    backgroundMusic.stop();
+                if (menu_backgroundMusic.getStatus() != sf::Music::Playing)
+                    menu_backgroundMusic.play();
+            }
+        }
+
+        if (gameState == GameState::Menu ||
+            gameState == GameState::GameOver ||
+            gameState == GameState::MoreMenu ||
+            gameState == GameState::Volume)
+        {
+            updateMenuButtonHovers();
+            return; // Không cập nhật gameplay
+        }
+
+        if (!isRunning)
+            return;
+
+
+        waveText.setString("Wave: " + std::to_string(waveNumber));
+
+        // Update player
+        player.update(dt);
+
+        // Update player2 nếu đang ở chế độ PvP
+        if (gameState == GameState::PvsP)
+        {
+            player2.update(dt);
+        }
+
+        // Xóa tường đã bị phá
+        walls.erase(
+            std::remove_if(walls.begin(), walls.end(),
+                           [](const Wall &w)
+                           { return w.isDestroyed(); }),
+            walls.end());
+
+        // Update enemy movement và logic
+        if (gameState == GameState::Playing || gameState == GameState::PvsP)
+        {
+            for (auto &enemy : enemies)
+            {
+                enemy->chasePlayer(player.getPosition(), dt, walls);
+                enemy->setWindow(&window); // Để enemy có thể xóa đạn ra khỏi màn hình
+                enemy->update(dt, walls, player.getPosition());
+            }
+        }
+
+        // Spawn enemy (chỉ ở chế độ Campaign/wave)
+        if (gameState == GameState::Playing && enemySpawnClock.getElapsedTime().asSeconds() > 3.f)
+        {
+            spawnEnemy(); // wave 5 vẫn spawn vô tận
+            enemySpawnClock.restart();
+        }
+
+        // Update bullets
+        for (auto &bullet : bullets)
+            bullet.update(dt);
+
+        bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
+                                     [this](const Bullet &b)
+                                     {
+                                         return b.isOffScreen(window);
+                                     }),
+                      bullets.end());
+
+        // Xử lý va chạm đạn player với enemy
+        auto &playerBullets = player.getBullets();
+        for (auto b = playerBullets.begin(); b != playerBullets.end();)
+        {
+            bool bulletErased = false;
+            for (auto &enemy : enemies)
+            {
+                if (enemy->getHP() <= 0)
+                    continue;
+                if (enemy->isHit(b->getBounds()))
+                {
+                    enemy->takeDamage(1); // Enemy mất 1 máu
+                    b = playerBullets.erase(b);
+                    explosionSound.play();
+                    bulletErased = true;
+
+                    if (enemy->getHP() <= 0) // Enemy chết
+                    {
+                        enemy->markToRemove();
+                        score += 100; // +100 điểm
+                        scoreText.setString("Score: " + std::to_string(score));
+                        enemyKilledCount++;
+
+                        // Hồi máu Player tùy loại enemy
+                        if (dynamic_cast<EnemyBoss *>(enemy.get()))
+                            player.healByPercent(0.5f);
+                        else if (dynamic_cast<EnemyTank *>(enemy.get()))
+                            player.healByPercent(0.1f);
+                        else if (dynamic_cast<EnemyScout *>(enemy.get()))
+                            player.healByPercent(0.2f);
+                    }
+                    break;
+                }
+            }
+            if (!bulletErased)
+                ++b;
+        }
+        // Kiểm tra va chạm đạn enemy với player
+        for (auto &enemy : enemies)
+        {
+            auto &enemyBullets = enemy->getBullets();
+            for (auto it = enemyBullets.begin(); it != enemyBullets.end();)
+            {
+                if (it->getBounds().intersects(player.getBounds()))
+                {
+                    player.takeDamage(10);
+                    it = enemyBullets.erase(it);
+
+                    // Hiệu ứng khi player bị bắn trúng
+                    std::cout << "Player bị enemy bắn trúng! HP: " << player.getHP() << std::endl;
+                }
+                else
+                {
+                    ++it;
+                }
+            }
+        }
+
+        // Xóa enemy đã chết
+        enemies.erase(
+            std::remove_if(enemies.begin(), enemies.end(),
+                           [](const std::unique_ptr<Enemy> &e)
+                           { return e->shouldBeRemoved(); }),
+            enemies.end());
+
+        // Chuyển wave nếu chưa phải wave 5 (dùng map và số enemy riêng cho mỗi wave)
+        if (enemies.empty() && enemySpawnedCount >= enemyPerWave && waveNumber < 5)
+        {
+            waveNumber++;
+            enemySpawnedCount = 0;
+            waveText.setString("Wave: " + std::to_string(waveNumber));
+            player.setPosition(playerSpawnPosition);
+
+            // Đặt số lượng enemy và load map tương ứng cho từng wave
+            if (waveNumber == 2)
+            {
+                enemyPerWave = 2;
+                createMaze("assets/Maps/maze2.txt");
+            }
+            else if (waveNumber == 3)
+            {
+                enemyPerWave = 3;
+                createMaze("assets/Maps/maze3.txt");
+            }
+            else if (waveNumber == 4)
+            {
+                enemyPerWave = 4;
+                createMaze("assets/Maps/maze4.txt");
+            }
+            else if (waveNumber == 5)
+            {
+                enemyKilledCount = 0;
+                createMaze("assets/Maps/maze5.txt");
+                // Ở wave 5, enemyPerWave không còn giới hạn
+            }
+        }
+        // Nếu đang ở wave 5 (không giới hạn enemyPerWave) thì không load lại map và không tăng enemyPerWave
+
+        // Nếu ở wave 5 và giết đủ 8 enemy thì mở cổng
+        if (waveNumber == 5 && enemyKilledCount >= 8 && !gateActive)
+        {
+            gateActive = true;
+            sf::FloatRect gateBounds = exitGate.getLocalBounds();
+            exitGate.setOrigin(gateBounds.width / 2.f, gateBounds.height / 2.f);
+            exitGate.setPosition(window.getSize().x / 2.f, window.getSize().y / 2.f);
+        }
+
+        // Kiểm tra player chạm cổng
+        if (gateActive && player.getBounds().intersects(exitGate.getGlobalBounds()))
+        {
+            isRunning = false;
+            gameState = GameState::Victory;
+            highscoreManager.addScore(score);
+            if (score > highScore)
+            {
+                highScore = score;
+                highScoreText.setString("High Score: " + std::to_string(highScore));
+            }
+        }
+
+        // Va chạm enemy với player
+        sf::FloatRect playerBounds(player.getPosition().x, player.getPosition().y, 40.f, 40.f);
+        for (auto &enemy : enemies)
+        {
+            if (enemy->isHit(playerBounds))
+            {
+                if (dynamic_cast<EnemyScout*>(enemy.get()))
+                {
+                    player.takeDamage(20); // scout gây sát thương cao hơn
+                }
+                else
+                {
+                    player.takeDamage(10); // Sát thương mặc định
+                }
+            }
+        }
+
+        // Kiểm tra thua (Playing)
+        if (gameState == GameState::Playing && player.getHP() <= 0)
+        {
+            isRunning = false;
+            gameState = GameState::GameOver;
+            gameOverText.setString("GAME OVER");
+            highscoreManager.addScore(score);
+            if (score > highScore)
+            {
+                highScore = score;
+                highScoreText.setString("High Score: " + std::to_string(highScore));
+            }
+        }
+        // Xử lí PvP (tính điểm và kết thúc)
+        else if (gameState == GameState::PvsP)
+        {
+            if (player.getHP() <= 0)
+            {
+                p2score++;
+                resetPvsPRound();
+            }
+            if (player2.getHP() <= 0)
+            {
+                p1score++;
+                resetPvsPRound();
+            }
+            if (p1score >= 3)
+            {
+                isRunning = false;
+                lastGameState = GameState::PvsP;
+                gameState = GameState::GameOver;
+                gameOverText.setString("Player 1 win!");
+            }
+            else if (p2score >= 3)
+            {
+                isRunning = false;
+                lastGameState = GameState::PvsP;
+                gameState = GameState::GameOver;
+                gameOverText.setString("Player 2 win!");
+            }
+        }
+
+        waveText.setString("Wave: " + std::to_string(waveNumber));
+
+        player.update(dt);
+
+        if (gameState == GameState::Playing && enemySpawnClock.getElapsedTime().asSeconds() > 3.f)
+        {
+            spawnEnemy();
+            enemySpawnClock.restart();
+        }
+
+        if (gameState == GameState::PvsP)
+        {
+
+            player2.update(dt);
+
+            // Xử lý va chạm đạn player1 -> player2
+            auto &p1Bullets = player.getBullets();
+            for (auto b = p1Bullets.begin(); b != p1Bullets.end();)
+            {
+                if (player2.getBounds().intersects(b->getBounds()))
+                {
+                    player2.takeDamage(10);
+                    b = p1Bullets.erase(b);
+                    explosionSound.play();
+                }
+                else
+                {
+                    ++b;
+                }
+            }
+            // Player 2 bắn trúng Player 1
+            auto &p2Bullets = player2.getBullets();
+            for (auto b = p2Bullets.begin(); b != p2Bullets.end();)
+            {
+                if (player.getBounds().intersects(b->getBounds()))
+                {
+                    player.takeDamage(10);
+                    b = p2Bullets.erase(b);
+                    explosionSound.play();
+                }
+                else
+                {
+                    ++b;
+                }
+            }
+            // Cập nhật điểm hiển thị
+            scoreText1.setString("P1 Score: " + std::to_string(p1score));
+            scoreText2.setString("P2 Score: " + std::to_string(p2score));
+        }
+
+        // Xóa tường
+        walls.erase(
+            std::remove_if(walls.begin(), walls.end(),
+                           [](const Wall &w)
+                           { return w.isDestroyed(); }),
+            walls.end());
+
+    }
+    void Game::render()
+    {
+        // Xóa toàn bộ nội dung khung hình trước đó
+        window.clear();
+
+        // Lấy vị trí chuột trong hệ tọa độ cửa sổ để xử lý hover
+        sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+
+        // Lambda xử lý đổi màu chữ khi chuột hover vào nút
+        auto handleHover = [&](sf::Text &text, sf::RectangleShape &box)
+        {
+            if (text.getGlobalBounds().contains(mousePos))
+                text.setFillColor(sf::Color::Yellow);
+            else
+                text.setFillColor(sf::Color::White);
+        };
+
+        if (gameState == GameState::Menu)
+        {
+            window.draw(menuBackgroundSprite);
+            window.draw(gameTitle);
+            // Xử lý hover cho các nút
+            handleHover(playButton, playButtonBox);
+            handleHover(pvpButton, pvpButtonBox);
+            handleHover(quitButton, quitButtonBox);
+            handleHover(moreButton, moreButtonBox);
+            // Vẽ khung và chữ các nút
+            window.draw(playButtonBox);
+            window.draw(pvpButtonBox);
+            window.draw(quitButtonBox);
+            window.draw(moreButtonBox);
+            window.draw(playButton);
+            window.draw(quitButton);
+            window.draw(moreButton);
+            window.draw(pvpButton);
+        }
+        else if (gameState == GameState::Playing)
+        {
+            window.draw(backgroundSprite);
+
+            // Vẽ toàn bộ tường
+            for (const Wall &wall : walls)
+                wall.draw(window);
+
+            // Vẽ Player 1
+            player.draw(window);
+
+            // Vẽ enemy
+            for (const auto &enemy : enemies)
+                enemy->draw(window);
+
+            // Vẽ đạn của Player
+            for (const auto &bullet : player.getBullets())
+                bullet.draw(window);
+
+            // Vẽ HUD: điểm số, wave, high score
+            window.draw(scoreText);
+            window.draw(waveText);
+            window.draw(highScoreText);
+
+            // Nếu cổng đã mở -> vẽ cổng
+            if (gateActive)
+                window.draw(exitGate);
+
+            // Nếu game đã kết thúc -> hiển thị chữ Game Over
+            if (!isRunning)
+                window.draw(gameOverText);
+        }
+        else if (gameState == GameState::Victory)
+        {
+            window.draw(menuBackgroundSprite2); // Nền menu khi thắng
+
+            // Tạo text thông báo thắng
+            sf::Text victoryText;
+            victoryText.setFont(font);
+            victoryText.setCharacterSize(64);
+            victoryText.setFillColor(sf::Color::Yellow);        
+            victoryText.setOutlineColor(sf::Color::Black);      
+            victoryText.setOutlineThickness(3);                 
+            victoryText.setString("YOU WIN!");
+
+
+            // Căn giữa chữ
+            sf::FloatRect textBounds = victoryText.getLocalBounds();
+            victoryText.setOrigin(textBounds.left + textBounds.width / 2.f,
+                                  textBounds.top + textBounds.height / 2.f);
+            victoryText.setPosition(390.f, 120.f);
+
+            // Vẽ thông báo thắng và điểm số
+            window.draw(victoryText);
+            window.draw(scoreText);
+
+            // Xử lý hover cho các nút
+            handleHover(retryButton, retryButtonBox);
+            handleHover(exitButton, exitButtonBox);
+            handleHover(returnButton, returnButtonBox);
+
+            // Vẽ nút
+            window.draw(retryButtonBox);
+            window.draw(exitButtonBox);
+            window.draw(returnButtonBox);
+            window.draw(retryButton);
+            window.draw(exitButton);
+            window.draw(returnButton);
+        }
+        else if (gameState == GameState::Playing || gameState == GameState::PvsP)
+        {
+            window.draw(backgroundSprite);
+
+            for (const Wall &wall : walls)
+                wall.draw(window);
+
+            player.draw(window);
+
+            // Thêm hiển thị player2 trong chế độ PvP
+            if (gameState == GameState::PvsP)
+            {
+                player2.draw(window);
+                player2.drawHP(window);
+                window.draw(scoreText1);
+                window.draw(scoreText2);
+            }
+        }
+        else if (gameState == GameState::MoreMenu)
+        {
+            window.draw(menuBackgroundSprite2); // Nền menu phụ
+
+            // Xử lý hover cho các nút
+            handleHover(tutorialButton, tutorialButtonBox);
+            handleHover(volumeButton, volumeButtonBox);
+            handleHover(highScoreButton, highScoreButtonBox);
+            // Vẽ nút
+            window.draw(tutorialButtonBox);
+            window.draw(volumeButtonBox);
+            window.draw(highScoreButtonBox);
+            window.draw(tutorialButton);
+            window.draw(volumeButton);
+            window.draw(highScoreButton);
+            window.draw(backButtonBox);
+            window.draw(backButton);
+        }
+        else if (gameState == GameState::HighScoreMenu)
+        {
+            window.draw(menuBackgroundSprite2); 
+            highscoreManager.drawBox(window, font, { 150, 100 }); // Vẽ bảng điểm cao
+            // Nút BACK
+            handleHover(backButton, backButtonBox);
+            window.draw(backButtonBox);
+            window.draw(backButton);
+            }
+        else if (gameState == GameState::GameOver)
+        {
+            window.draw(menuBackgroundSprite2);
+            window.draw(gameOverText);
+            // Chỉ hiển thị điểm khi không phải PvP
+            if (lastGameState != GameState::PvsP) {
+                window.draw(scoreText);
+            }
+
+            // Xử lý hover và vẽ nút
+            handleHover(retryButton, retryButtonBox);
+            handleHover(exitButton, exitButtonBox);
+            window.draw(retryButtonBox); 
+            window.draw(exitButtonBox); 
+            window.draw(retryButton);
+            window.draw(exitButton);
+            window.draw(returnButtonBox);
+            window.draw(returnButton);
+            }
+
+        else if (gameState == GameState::Tutorial)
+        {
+            handleHover(backButton, backButtonBox);
+            window.draw(menuBackgroundSprite2);
+            window.draw(tutorialBox);
+            window.draw(tutorialText);
+            window.draw(wasdSprite);
+            window.draw(spaceSprite);
+            window.draw(backButtonBox);
+            window.draw(backButton);
+            window.draw(arrowsSprite);
+            window.draw(enterSprite);
+        }
+        else if (gameState == GameState::Volume)
+        {
+            window.draw(menuBackgroundSprite2);
+            window.draw(musicButton);
+            window.draw(musicText);
+            window.draw(sfxButton);
+            window.draw(sfxText);
+            window.draw(backButtonBox);
+            window.draw(backButton);
+        }
+        // Hiển thị toàn bộ nội dung đã vẽ lên cửa sổ
+        window.display();
+    }
+
+    void Game::spawnEnemy()
+    {
+        // Nếu không có điểm spawn enemy -> thoát hàm
+        if (enemySpawnPoints.empty())
+            return;
+
+        // Giới hạn số lượng spawn trong các wave < 5
+        if (waveNumber < 5 && enemySpawnedCount >= enemyPerWave)
+            return;
+
+        // Danh sách lưu các chỉ số spawn point còn trống hoặc chưa đầy
+        std::vector<int> availableIndexes;
+        for (int i = 0; i < enemySpawnCounts.size(); ++i)
+        {
+            // Ở wave 5, bỏ qua giới hạn spawn tại một điểm.
+            // Các wave khác → chỉ chọn những điểm spawn chưa vượt quá maxEnemiesPerSpawn
+            if (waveNumber == 5 || enemySpawnCounts[i] < maxEnemiesPerSpawn)
+                availableIndexes.push_back(i);
+        }
+        // Nếu không còn điểm spawn khả dụng -> thoát hàm
+        if (availableIndexes.empty())
+            return;
+
+        // Xác định loại enemy spawn ngẫu nhiên
+        // type 0-4: EnemyTank, 5-8: EnemyScout, 9: EnemyBoss
+        int type = rand() % 10;
+        // Chọn ngẫu nhiên một spawn point từ danh sách khả dụng
+        int chosen = availableIndexes[rand() % availableIndexes.size()];
+        sf::Vector2f spawnPos = enemySpawnPoints[chosen];
+
+        // Tạo enemy tương ứng với loại đã chọn
+        std::unique_ptr<Enemy> enemy;
+        if (type < 5)
+            enemy = std::make_unique<EnemyTank>(spawnPos.x, spawnPos.y); // 50% xác suất
+        else if (type < 9)
+            enemy = std::make_unique<EnemyScout>(spawnPos.x, spawnPos.y); // 40% xác suất
+        else
+            enemy = std::make_unique<EnemyBoss>(spawnPos.x, spawnPos.y); // 10% xác suất
+
+        // Tăng tốc độ enemy theo số wave (wave càng cao -> enemy càng nhanh)
+        enemy->setSpeed(50.f * static_cast<float>(std::pow(1.35f, waveNumber)));
+        
+        // Thêm enemy vào danh sách đang hoạt động
+        enemies.push_back(std::move(enemy));
+        // Tăng số lần spawn tại điểm spawn đã chọn
+        enemySpawnCounts[chosen]++;
+        // Tăng tổng số enemy spawn trong wave (trừ wave 5 không giới hạn)
+        if (waveNumber < 5)
+            enemySpawnedCount++;
+        if (waveNumber < 5)
+            enemySpawnedCount++;
+    }
+
+    void Game::createMaze(const std::string &mapFile)
+    {
+        // Mở file bản đồ (map) từ đường dẫn mapFile
+        std::ifstream file(mapFile);
+        if (!file.is_open()) // Nếu không mở được file → báo lỗi và thoát
+        {
+            std::cerr << "Không thể mở " << mapFile << "\n";
+            return;
+        }
+        // Xóa dữ liệu cũ trước khi tạo map mới
+        walls.clear(); // Xóa toàn bộ tường cũ
+        enemySpawnPoints.clear(); // Xóa toàn bộ điểm spawn enemy cũ
+        enemySpawnCounts.clear(); // Xóa bộ đếm số lượng enemy spawn tại từng điểm
+
+        std::string line;
+        int row = 0; // Dòng hiện tại trong file
+        const int tileSize = 40; // Kích thước 1 ô gạch (tile) 40x40 pixels
+
+        // Đọc file bản đồ từng dòng
+        while (std::getline(file, line))
+        { 
+            // Duyệt từng ký tự trong dòng
+            for (int col = 0; col < line.size(); ++col)
+            {
+                char ch = line[col]; // Ký tự đại diện cho loại ô
+                sf::Vector2f pos(col * tileSize, row * tileSize); // Tính tọa độ ô
+
+                switch (ch)
+                {
+                    // Ký tự '#' → Tường thường (máu 10)
+                case '#':
+                {
+                    Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 10);
+                    w.setTexture(&wallTexture); // Gán texture tường thường
+                    walls.push_back(w); // Thêm vào danh sách tường
+                    break;
+                }
+
+                // Ký tự '@' → Tường bền 
+                case '@':
+                {
+                    Wall w(pos, sf::Vector2f(tileSize - 4, tileSize - 4), 999999);
+                    w.setTexture(&strongWallTexture);
+                    walls.push_back(w);
+                    break;
+                }
+                // Ký tự 'S' → Vị trí spawn của người chơi
+                case 'S':
+                    playerSpawnPosition = pos;
+                    break;
+                    // Ký tự 'E' → Vị trí spawn của enemy
+                case 'E':
+                    if (enemySpawnPoints.size() < 5)
+                    {
+                        enemySpawnPoints.push_back(pos); // Lưu vị trí spawn
+                        enemySpawnCounts.push_back(0);// Khởi tạo bộ đếm spawn 
+                    }
+                    break;
+                }
+            }
+            row++; // Chuyển sang dòng tiếp theo
+        }
+        file.close(); // Đóng file map
+
+        // Cập nhật vị trí và thông tin tường cho người chơi
+        player.setWalls(&walls);
+        player.setPosition(playerSpawnPosition);
+    }

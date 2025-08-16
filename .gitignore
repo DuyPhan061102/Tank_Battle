@@ -1,4 +1,46 @@
-SFML/
+# IDE
+.vs/
 .vscode/
+*.sln
+*.vcxproj
+*.vcxproj.*
+*.filters
+*.user
+*.suo
+*.VC.db
+*.VC.VC.opendb
+*.sdf
+*.opensdf
+*.ncb
+
+# Build artifacts
+Debug/
+Release/
+x64/
+x86/
 *.exe
+*.obj
+*.pdb
+*.ilk
+*.idb
+*.log
+*.tlog
+*.lastbuildstate
+*.cache
+
+# SFML runtime
 sfml-*.dll
+openal32.dll
+SFML/
+# System files
+.DS_Store
+Thumbs.db
+
+# Project-specific ignores
+/assets/*.txt
+Makefile
+bin/
+phong
+main
+highscore.txt
+
