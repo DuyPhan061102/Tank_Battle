@@ -41,7 +41,7 @@ Người chơi sẽ điều khiển xe tăng để chiến đấu với kẻ đ�
 
 1. Clone project về máy:  
    - Bấm nút **Code → Download ZIP** trên GitHub  
-   - Hoặc dùng Git: `git clone https://github.com/DuyPhan061102/tank-battle.git`
+   - Hoặc dùng Git: `git clone https://github.com/DuyPhan061102/Tank_Battle.git`
 
 2. Mở project bằng **Visual Studio** hoặc **VS Code**.
 
