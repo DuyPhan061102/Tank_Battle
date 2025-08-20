@@ -30,7 +30,7 @@ Người chơi sẽ điều khiển xe tăng để chiến đấu với kẻ đ�
 ---
 
 
-## 📦 Cài đặt & chạy game
+##  Cài đặt & chạy game
 
 # Yêu cầu
 
